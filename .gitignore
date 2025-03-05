@@ -1,0 +1,67 @@
+# PHP project gitignore
+# Dependencies and vendor files
+/vendor/
+/node_modules/
+
+# Environment and configuration
+.env
+*.env
+config.php
+*-config.php
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+*.code-workspace
+
+# Logs and databases
+*.log
+*.sql
+*.sqlite
+*.db
+
+# Cache and temporary files
+/cache/
+/temp/
+*.cache
+*.tmp
+
+# Compiled files
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+# Package files
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+*.deb
+
+# Private keys and certificates
+*.pem
+*.key
+*.crt
+
+# Media files that shouldn't be in version control
+*.mp3
+*.wav
+*.mp4
+*.avi
+*.mov
+
+# Backup files
+*.bak
+*.backup
+*.save

@@ -1,0 +1,115 @@
+    1  apt update
+    2  su -
+    3  ping 10.8.0.1
+    4  ip a
+    5  ssh root@10.8.0.1
+    6  ls
+    7  cd Téléchargements/
+    8  ls
+    9  cd DEBIAN/
+   10  ls
+   11  cd ..
+   12  cd usr/
+   13  ls
+   14  cd share/
+   15  ls
+   16  su -
+   17  ssh root@www.viendez.com
+   18  sftp 192.168.1.169
+   19  sftp -P2222 viendez.com
+   20  ssh -t root@viendez.com -p 2222
+   21  cd /etc/openvpn
+   22  cd client/
+   23  ls
+   24  openvpn proxmox.ovpn
+   25  sudo openvpn proxmox.ovpn
+   26  cd ..
+   27  openvpn
+   28  ./openvpn
+   29  ls
+   30  su -
+   31  ssh 192.168.1.73
+   32  ping 192.168.1.73
+   33  ping 192.168.1.254
+   34  ping 10.8.0.1
+   35  sftp 192.168.1.169
+   36  sftp viendez.com -P 2222
+   37  sftp viendez.com
+   38  sftp -P2222 viendez.com
+   39  htop
+   40  apt install htop
+   41  sudo apt install htop
+   42  su -
+   43  ping 10.8.0.1
+   44  ping google.com
+   45  ping viendez.com
+   46  su -
+   47  htop
+   48  pwd
+   49  apt udate
+   50  sudo apt update
+   51  sudo su -
+   52  su -
+   53  cd /var
+   54  cd www
+   55  ls
+   56  cd html
+   57  ls
+   58  nano index.html 
+   59  sudo nano index.html 
+   60  su -
+   61  sudo nano index.html 
+   62  sudo nano info.php
+   63  ip a
+   64  sudo apt install webmin
+   65  sudo apt install cockpit
+   66  apt install gnupg2 curl -y
+   67  sudo apt install gnupg2 curl -y
+   68  cd /tmp
+   69  curl -o setup-repos.sh https://raw.githubusercontent.com/webmin/webmin/master/setup-repos.sh
+   70  sh setup-repos.sh
+   71  sudo sh setup-repos.sh
+   72  sudo apt update -y
+   73  sudo apt install webmin --install-recommends -y
+   74  service webmin start
+   75  sudo service webmin start
+   76  ip a
+   77  sudo mysql -u root -p
+   78  su -
+   79  htop
+   80  reboot
+   81  sudo reboot
+   82  htop
+   83  sudo apt install btop
+   84  btop
+   85  cd /var/www/html*
+   86  cd /var/www/html
+   87  ls
+   88  su -
+   89  btop
+   90  sudo shtdown
+   91  sudo shutdown
+   92  sudo shutdown now
+   93  ip a
+   94  htop
+   95  sudo reboot now
+   96  htop
+   97  kill -9 236147
+   98  htop
+   99  sudo reboot -now 
+  100  sudo reboot -now
+  101  sudo reboot now
+  102  htop
+  103  htop
+  104  sudo apt update
+  105  sudo apt upgrade
+  106  htop
+  107  sudo reboot now
+  108  btop
+  109  sudo reboot now
+  110  sudo apt upgrade -y
+  111  btop
+  112  sudo reboot now
+  113  ip a
+  114  htop
+  115  history > frwhis.txt
