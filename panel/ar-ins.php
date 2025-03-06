@@ -4,9 +4,9 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 // Secure session configuration
-ini_set('session.cookie_httponly', 1);
-ini_set('session.cookie_secure', 1);
-ini_set('session.use_only_cookies', 1);
+//ini_set('session.cookie_httponly', 1);
+//ini_set('session.cookie_secure', 1);
+//ini_set('session.use_only_cookies', 1);
 
 // Add rate limiting
 $timeout = 300;
@@ -37,7 +37,7 @@ use PHPMailer\PHPMailer\SMTP;
 use PHPMailer\PHPMailer\Exception;
 
 //Load Composer's autoloader
-require '/reg/vendor/autoload.php';
+require '/panel/reg/vendor/autoload.php';
 
 $msg = "";
 if (isset($_POST['submit'])) {
@@ -81,15 +81,15 @@ if (isset($_POST['submit'])) {
                         try {
                             $mail->SMTPDebug = 0;
                             $mail->isSMTP();
-                            $mail->Host = 'smtp.ionos.fr';
+                            $mail->Host = 'smtp.gmail.com';
                             $mail->SMTPAuth = true;
-                            $mail->Username = 'admin@poker31.org';
-                            $mail->Password = 'Kookies7*p';
+                            $mail->Username = 'wenger.franck@gmail.com';
+                            $mail->Password = 'Mdp4*wengerfranck';
                             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
                             $mail->Port = 587;
 
                             // Escape output for email template
-                            $resetLink = htmlspecialchars("https://poker31.org/reg/change-Password.php?Reset=" . urlencode($CodeReset));
+                            $resetLink = htmlspecialchars("https://pviendez.com/reg/change-Password.php?Reset=" . urlencode($CodeReset));
                             
                             // Set expiration time for reset link
                             $mail->setFrom('admin@poker31.org', 'Eagle');

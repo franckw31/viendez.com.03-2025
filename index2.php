@@ -1,51 +1,38 @@
 <?php
 session_start();
-include('panel/include/config.php');
-
 if (isset($_SESSION['id'])) {
     header("Location: indexnav.html");
     exit();
 }
 
-$error_message = '';
-
 if (isset($_POST['login'])) {
     $pseudo = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_STRING);
     $password = $_POST['password'];
+    $remember = isset($_POST['remember']) ? $_POST['remember'] : 0;
+
+    include('panel/include/config.php');
     
-    if (empty($pseudo) || empty($password)) {
-        $error_message = "Veuillez remplir tous les champs";
-    } else {
-        // Use prepared statement
-        $stmt = $con->prepare("SELECT `id-membre`, `pseudo`, `password` FROM `membres` WHERE `pseudo` = ?");
-        if ($stmt) {
-            $stmt->bind_param("s", $pseudo);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            
-            if ($result->num_rows === 1) {
-                $row = $result->fetch_assoc();
-                // In production, use: if (password_verify($password, $row['password']))
-                if ($password === $row['password']) {
-                    $_SESSION['user'] = $row['pseudo'];
-                    $_SESSION['login'] = $row['pseudo'];
-                    $_SESSION['id'] = $row['id-membre'];
-                    
-                    if (isset($_POST['remember']) && $_POST['remember'] == 1) {
-                        setcookie('uname', $row['pseudo'], time() + 60 * 60 * 24 * 30, "/", "", true, true);
-                    }
-                    
-                    header("Location: indexnav.html");
-                    exit();
-                } else {
-                    $error_message = "Mot de passe incorrect";
-                }
-            } else {
-                $error_message = "Utilisateur non trouvé";
+    // Use prepared statement to prevent SQL injection
+    $stmt = $con->prepare("SELECT `id-membre`, `password` FROM `membres` WHERE `pseudo` = ?");
+    $stmt->bind_param("s", $pseudo);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows === 1) {
+        $row = $result->fetch_assoc();
+        // Note: In a real application, you should use password_verify() with properly hashed passwords
+        if ($password === $row['password']) { // Replace with proper password verification
+            if ($remember == 1) {
+                setcookie('uname', $pseudo, time() + 60 * 60 * 24 * 30, "/", "", true, true);
+                // Don't store passwords in cookies, consider using tokens instead
             }
-            $stmt->close();
-        } else {
-            $error_message = "Erreur de connexion à la base de données";
+            
+            $_SESSION['user'] = $pseudo;
+            $_SESSION['login'] = $pseudo;
+            $_SESSION['id'] = $row['id-membre'];
+            
+            header("Location: indexnav.html");
+            exit();
         }
     }
 }
@@ -77,11 +64,7 @@ if (isset($_POST['login'])) {
                 <div class="row w-100 mx-0">
                     <div class="col-lg-4 mx-auto">
                         <div class="auth-form-light text-left py-5 px-4 px-sm-5">
-                            <?php if (!empty($error_message)): ?>
-                                <div class="alert alert-danger">
-                                    <?php echo htmlspecialchars($error_message); ?>
-                                </div>
-                            <?php endif; ?>
+
                             <h4>Bienvenue, Veuillez vous identifier svp</h4>
                             <h6 class="font-weight-light">Pseudo & Mot de passe requis.</h6>
                             <form class="pt-3" method="post" name="login">
@@ -92,7 +75,8 @@ if (isset($_POST['login'])) {
                                 </div>
                                 <div class="form-group">
                                     <input type="password" name="password" class="form-control form-control-lg"
-                                        id="password" placeholder="Password">
+                                        id="password" placeholder="Password" value="<?php if (isset($_COOKIE['password']))
+                                            echo $_COOKIE['password']; ?>">
                                 </div>
                                 <div class="mt-3">
                                     <input type="submit"
