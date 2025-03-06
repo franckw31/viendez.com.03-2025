@@ -1,5 +1,5 @@
 <?php
-$host="192.168.1.23";
+$host="192.168.1.78"; // Updated host
 $uname="root";
 $dbpass="Kookies7*";
 $db="dbs9616600";
