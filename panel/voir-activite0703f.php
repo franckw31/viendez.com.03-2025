@@ -2805,10 +2805,10 @@
 																			  
 																				<?php foreach(fetchMembres() as $row): ?>
 																				<tr class="clickable-row" data-id="<?= $row['id-membre'] ?>">
-																				    <td style="color: #ffffff !important;">
+																				<td style="color: #ffffff !important;">
 																											<?php echo $row['classement']; ?>
 																										</td>
-																										<td style="color: #ffffff !important;">
+																										<td>
 																										<?php
 																										$id2 = $row['id-membre'];
 																										$sql2 = mysqli_query($con, "SELECT * FROM `membres` WHERE `id-membre` = '$id2' ");

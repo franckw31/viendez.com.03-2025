@@ -3,6 +3,8 @@ session_start();
 error_reporting(0);
 include('include/config.php');
 
+
+
 // Check if user is logged in
 if (strlen($_SESSION['id']) == 0) {
     header('location:logout.php');
@@ -325,7 +327,7 @@ if (isset($_POST['submit4'])) {
                         <div id="contenu">
                             <div id="auCentre">
                                 <div id="bMenu">
-                                    <a href="#" id="css" class="btnnav" onmouseover="afficher('css')">Joueur</a>
+                                    <a href="#" id="css" class="btnnav" onmouseover="afficher('css')">JoueuR</a>
                                     <a href="#" id="css2" class="btnnav" onmouseover="afficher('css2')">Orga.</a>
                                     <a href="#" id="js" class="btnnav" onmouseover="afficher('js')">Compét.</a>
                                     <a href="#" id="php" class="btnnav" onmouseover="afficher('php')">Loisirs</a>
@@ -433,10 +435,10 @@ if (isset($_POST['submit4'])) {
                                                                             </tr>
                                                                             <tr>
                                                                                 <th style="color: #ffffff !important;">Date inscription</th>
-                                                                                <td><input class="form-control" id="posting_date" name="posting_date" type="timestamp" value="<?php echo $row['posting_date']; ?>">
+                                                                                <td><input class="form-control" id="posting_date" name="posting_date" type="date" value="<?php echo $row['posting_date']; ?>">
                                                                                 </td>
                                                                                 <th style="color: #ffffff !important;">Fin Abonnement</th>
-                                                                                <td><input class="form-control" id="association_date" name="association_date" type="timestamp" value="<?php echo $row['association_date']; ?>">
+                                                                                <td><input class="form-control" id="association_date" name="association_date" type="date" value="<?php echo $row['association_date']; ?>">
                                                                                 </td>
                                                                             </tr>
                                                                             <tr>
