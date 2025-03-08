@@ -31,27 +31,54 @@ if (isset($_POST['submit']) || isset($_POST['submito'])) {
     $codev = mysqli_real_escape_string($con, $_POST['CodeV']);
     $verification = mysqli_real_escape_string($con, $_POST['verification']);
     $pseudo = mysqli_real_escape_string($con, $_POST['pseudo']);
-   
-    // Move these outside the submito check since we need them for both cases
-    $def_str = mysqli_real_escape_string($con, $_POST['def_str'] ?? '');
-    $def_nbj = mysqli_real_escape_string($con, $_POST['def_nbj'] ?? '');
-    $def_nomact = mysqli_real_escape_string($con, $_POST['def_nomact'] ?? '');
+    $def_nomact = mysqli_real_escape_string($con, $_POST['def_nomact']);
+    $def_str = mysqli_real_escape_string($con, $_POST['def_str']);
+    $def_nbj = mysqli_real_escape_string($con, $_POST['def_nbj']);
+    $def_buy = mysqli_real_escape_string($con, $_POST['def_buy']);
+    $def_rak = mysqli_real_escape_string($con, $_POST['def_rak']);
+    $def_bou = mysqli_real_escape_string($con, $_POST['def_bou']);
+    $def_rec = mysqli_real_escape_string($con, $_POST['def_rec']);
+    $def_jet = mysqli_real_escape_string($con, $_POST['def_jet']);
+    $def_bon = mysqli_real_escape_string($con, $_POST['def_bon']);
+    $def_add = mysqli_real_escape_string($con, $_POST['def_add']);
+    $def_ant = mysqli_real_escape_string($con, $_POST['def_ant']);
+
+
+    // Additional fields for submito
+    if (isset($_POST['submito'])) {
+        $def_str = mysqli_real_escape_string($con, $_POST['def_str'] ?? '');
+        $def_nbj = mysqli_real_escape_string($con, $_POST['def_nbj'] ?? '');
+        $def_nomact = mysqli_real_escape_string($con, $_POST['def_nomact'] ?? '');
+    }
 
     try {
-        // Use the same query for both submit and submito
-        $stmt = mysqli_prepare($con, "UPDATE `membres` SET 
-            pseudo = ?, email = ?, telephone = ?, fname = ?, 
-            lname = ?, posting_date = ?, association_date = ?, 
-            rue = ?, password = ?, ville = ?, CodeV = ?,
-            verification = ?, naissance_date = ?, def_str = ?,
-            def_nbj = ?, def_nomact = ? WHERE `id-membre` = ?");
+        if (isset($_POST['submito'])) {
+            $stmt = mysqli_prepare($con, "UPDATE `membres` SET 
+                pseudo = ?, email = ?, telephone = ?, fname = ?, 
+                lname = ?, posting_date = ?, association_date = ?, 
+                rue = ?, password = ?, ville = ?, CodeV = ?,
+                verification = ?, naissance_date = ?, def_str = ?,
+                def_nbj = ?, def_nomact = ? WHERE `id-membre` = ?");
 
-        mysqli_stmt_bind_param($stmt, 'ssssssssssssssssi',
-            $pseudo, $email, $telephone, $fname,
-            $lname, $posting_date, $association_date,
-            $rue, $password, $ville, $codev,
-            $verification, $naissance_date, $def_str,
-            $def_nbj, $def_nomact, $id);
+            mysqli_stmt_bind_param($stmt, 'ssssssssssssssssi',
+                $pseudo, $email, $telephone, $fname,
+                $lname, $posting_date, $association_date,
+                $rue, $password, $ville, $codev,
+                $verification, $naissance_date, $def_str,
+                $def_nbj, $def_nomact, $id);
+        } else {
+            $stmt = mysqli_prepare($con, "UPDATE `membres` SET 
+                pseudo = ?, email = ?, telephone = ?, fname = ?, 
+                lname = ?, posting_date = ?, association_date = ?, 
+                rue = ?, password = ?, ville = ?, CodeV = ?,
+                verification = ?, naissance_date = ? WHERE `id-membre` = ?");
+
+            mysqli_stmt_bind_param($stmt, 'sssssssssssssi',
+                $pseudo, $email, $telephone, $fname,
+                $lname, $posting_date, $association_date,
+                $rue, $password, $ville, $codev,
+                $verification, $naissance_date, $id);
+        }
 
         if (!mysqli_stmt_execute($stmt)) {
             throw new Exception("Erreur lors de la mise à jour: " . mysqli_stmt_error($stmt));
@@ -521,16 +548,19 @@ if (isset($_POST['submit4'])) {
 
                                                                             </tr>
                                                                             <tr>
-                                                                                <td style="text-align:center;">
-                                                                                    <button type="submit" class="btn btn-primary-green btn-block" name="submito">Enregistrer</button>
+                                                                                <td style="text-align:center ; display:none">
+                                                                                    <button type="submit" name="submito" id="submito" class="btn btn-oo btn-primary">
+                                                                                        Mise à jour</button>
                                                                                 </td>
-                                                                                <td style="text-align:center;">
-                                                                                    <a href="liste-membres.php" class="btn btn-primary btn-block">Retour</a>
+                                                                                <td style="text-align:center ;">
+                                                                                    <button type="submit" class="btn btn-primary-green btn-block" name="submito">OK </button>
                                                                                 </td>
-                                                                                <td style="text-align:center;">
-                                                                                    <button type="submit" class="btn btn-primary btn-block" name="submitdupo">Nouvelle Activité</button>
+                                                                                <td style="text-align:center ;">
+                                                                                    <button type="submit" class="btn btn-primary btn-block" name="submito">Modifier</button>
                                                                                 </td>
-                                                                                <td></td>
+                                                                                <td style="text-align:center ;">
+                                                                                    <button type="submit" class="btn btn-primary btn-block" name="submitdupo">Création Activité</button>
+                                                                                </td>
                                                                             </tr>
                                                                             <tr>
                                                                                 <td colspan="4"></td>

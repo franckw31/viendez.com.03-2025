@@ -13,14 +13,13 @@ if (strlen($_SESSION['id']) == 0) {
 
 $id = intval($_GET['id']); // get value
 
-if (isset($_POST['submit']) || isset($_POST['submito'])) {
-    // Add debug logging
-    error_log("Form submitted with " . (isset($_POST['submit']) ? 'submit' : 'submito'));
-    
-    // Basic sanitization
+if (isset($_POST['submit'])) {
+    // Sanitize inputs
     $password = mysqli_real_escape_string($con, $_POST['password']);
     $naissance_date = mysqli_real_escape_string($con, $_POST['naissance_date']);
-    $ville = mysqli_real_escape_string($con, $_POST['ville']); 
+    $ville = mysqli_real_escape_string($con, $_POST['ville']);
+    $longitude = mysqli_real_escape_string($con, $_POST['longitude']);
+    $latitude = mysqli_real_escape_string($con, $_POST['latitude']);
     $rue = mysqli_real_escape_string($con, $_POST['rue']);
     $posting_date = mysqli_real_escape_string($con, $_POST['posting_date']);
     $association_date = mysqli_real_escape_string($con, $_POST['association_date']);
@@ -28,44 +27,31 @@ if (isset($_POST['submit']) || isset($_POST['submito'])) {
     $lname = mysqli_real_escape_string($con, $_POST['lname']);
     $telephone = mysqli_real_escape_string($con, $_POST['telephone']);
     $email = mysqli_real_escape_string($con, $_POST['email']);
-    $codev = mysqli_real_escape_string($con, $_POST['CodeV']);
+    $codev = mysqli_real_escape_string($con, $_POST['codev']);
     $verification = mysqli_real_escape_string($con, $_POST['verification']);
     $pseudo = mysqli_real_escape_string($con, $_POST['pseudo']);
-   
-    // Move these outside the submito check since we need them for both cases
-    $def_str = mysqli_real_escape_string($con, $_POST['def_str'] ?? '');
-    $def_nbj = mysqli_real_escape_string($con, $_POST['def_nbj'] ?? '');
-    $def_nomact = mysqli_real_escape_string($con, $_POST['def_nomact'] ?? '');
 
-    try {
-        // Use the same query for both submit and submito
-        $stmt = mysqli_prepare($con, "UPDATE `membres` SET 
-            pseudo = ?, email = ?, telephone = ?, fname = ?, 
-            lname = ?, posting_date = ?, association_date = ?, 
-            rue = ?, password = ?, ville = ?, CodeV = ?,
-            verification = ?, naissance_date = ?, def_str = ?,
-            def_nbj = ?, def_nomact = ? WHERE `id-membre` = ?");
+    // Use prepared statement for update
+    $stmt = mysqli_prepare($con, "UPDATE `membres` SET 
+        pseudo = ?, email = ?, telephone = ?, fname = ?, 
+        lname = ?, posting_date = ?, association_date = ?, 
+        rue = ?, password = ?, ville = ?, CodeV = ?, 
+        verification = ?, naissance_date = ?, longitude = ?, 
+        latitude = ? WHERE `id-membre` = ?");
 
-        mysqli_stmt_bind_param($stmt, 'ssssssssssssssssi',
-            $pseudo, $email, $telephone, $fname,
-            $lname, $posting_date, $association_date,
-            $rue, $password, $ville, $codev,
-            $verification, $naissance_date, $def_str,
-            $def_nbj, $def_nomact, $id);
+    mysqli_stmt_bind_param($stmt, 'sssssssssssssssi', 
+        $pseudo, $email, $telephone, $fname,
+        $lname, $posting_date, $association_date,
+        $rue, $password, $ville, $codev,
+        $verification, $naissance_date, $longitude,
+        $latitude, $id);
 
-        if (!mysqli_stmt_execute($stmt)) {
-            throw new Exception("Erreur lors de la mise à jour: " . mysqli_stmt_error($stmt));
-        }
-
-        $_SESSION['msg'] = "Mise à jour effectuée avec succès";
-        
-    } catch (Exception $e) {
-        $_SESSION['error'] = $e->getMessage();
-    } finally {
-        if (isset($stmt)) {
-            mysqli_stmt_close($stmt);
-        }
+    if (mysqli_stmt_execute($stmt)) {
+        $_SESSION['msg'] = "MAJ Ok !!";
+    } else {
+        $_SESSION['error'] = "Error updating record: " . mysqli_error($con);
     }
+    mysqli_stmt_close($stmt);
 }
 
 if (isset($_POST['submitdup'])) {
@@ -517,30 +503,33 @@ if (isset($_POST['submit4'])) {
                                                                                 </td>
                                                                                 <form method="post">
                                                                                     <th style="color:rgb(64, 30, 235) !important;">Activité :</th>
-                                                                                    <td colspan="3"><input class="form-control" id="def_nomact" name="def_nomact" type="text" style="text-align:center; font-size:22px; bold" value="<?php echo $row['def_nomact']; ?>"></td>
+                                                                                    <td colspan="3"><input class="form-control" id="pseudo" name="pseudo" type="text" style="text-align:center; font-size:22px; bold" value="<?php echo $row['pseudo']; ?>"></td>
 
                                                                             </tr>
                                                                             <tr>
-                                                                                <td style="text-align:center;">
-                                                                                    <button type="submit" class="btn btn-primary-green btn-block" name="submito">Enregistrer</button>
+                                                                                <td style="text-align:center ; display:none">
+                                                                                    <button type="submit" name="submito" id="submito" class="btn btn-oo btn-primary">
+                                                                                        Mise à jour</button>
                                                                                 </td>
-                                                                                <td style="text-align:center;">
-                                                                                    <a href="liste-membres.php" class="btn btn-primary btn-block">Retour</a>
+                                                                                <td style="text-align:center ;">
+                                                                                    <button type="submit" class="btn btn-primary-green btn-block" name="submito">OK </button>
                                                                                 </td>
-                                                                                <td style="text-align:center;">
-                                                                                    <button type="submit" class="btn btn-primary btn-block" name="submitdupo">Nouvelle Activité</button>
+                                                                                <td style="text-align:center ;">
+                                                                                    <button type="submit" class="btn btn-primary btn-block" name="submito">Modifier</button>
                                                                                 </td>
-                                                                                <td></td>
+                                                                                <td style="text-align:center ;">
+                                                                                    <button type="submit" class="btn btn-primary btn-block" name="submitdupo">Dupliquer Activité</button>
+                                                                                </td>
                                                                             </tr>
                                                                             <tr>
                                                                                 <td colspan="4"></td>
                                                                             </tr>
                                                                             <tr>
-                                                                                <th style="color: #ffffff !important;">Structure</th>
-                                                                                <td><input class="form-control" id="def_str" name="def_str" type="text" value="<?php echo $row['def_str']; ?>">
+                                                                                <th style="color: #ffffff !important;">Prénom Org</th>
+                                                                                <td><input class="form-control" id="fname" name="fname" type="text" value="<?php echo $row['fname']; ?>">
                                                                                 </td>
-                                                                                <th style="color: #ffffff !important;">Nb Joueurs</th>
-                                                                                <td><input class="form-control" id="def_nbj" name="def_nbj" type="text" value="<?php echo $row['def_nbj']; ?>">
+                                                                                <th style="color: #ffffff !important;">Nom</th>
+                                                                                <td><input class="form-control" id="lname" name="lname" type="text" value="<?php echo $row['lname']; ?>">
                                                                                 </td>
                                                                             </tr>
                                                                             
