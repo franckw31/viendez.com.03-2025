@@ -56,7 +56,6 @@
 		
 		if (isset($_POST['submitinsmanu'])) {
 			$lois = $_POST['lois'];
-			// echo $lois;
 			$activi = $_SESSION['id'];
 			$activi = $_POST['activi'];
 			$sql0 = mysqli_query($con, "SELECT * FROM `participation` WHERE `id-membre` = '$lois' AND `id-activite` = '$activi' ");
@@ -68,23 +67,16 @@
 				$intordre = (int) $ordre;
 				$intordre = $intordre + 1;
 				$ordre = (string) $intordre;
-				// echo $lois;
-				$sql4 = mysqli_query($con, "SELECT * FROM `membres` WHERE `id-membre` =  $lois ");
-				// echo $lois;
-				while ($row4 = mysqli_fetch_array($sql4)){ 
-				$nom_mem = $row4['pseudo'];
-				// echo "***".$nom_mem."***" ;
-				};
-				$sql2 = mysqli_query($con, "INSERT INTO `participation` (`id-membre`, `id-activite`, `ordre`, `nom-membre` , `id-siege` , `id-table`) VALUES ( '$lois', '$activi','$ordre','$nom_mem' ,0,0)");
-				
-				while ($result = mysqli_fetch_array($sql4)) {
+				$sql2 = mysqli_query($con, "INSERT INTO `participation` (`id-membre`, `id-activite`, `ordre`) VALUES ( '$lois', '$activi','$ordre' )");
+				$sql3 = mysqli_query($con, "SELECT * FROM `membres` WHERE `id-membre` =  $lois ");
+				while ($result = mysqli_fetch_array($sql3)) {
 					$email = $result['email'];
 					$num_membre = $result['id-membre'];
 					$num_activite = $activi;
 					$reset = $result['CodeV'];
 				}
 				if (strlen($email == 0)) {
-					$email = "franck.wenger@wanadoo.fr";
+					$email = "admin@poker31.org";
 					$num_membre = "265";
 					$reset = "";
 				}
@@ -92,15 +84,15 @@
 				try {
 					$mail->SMTPDebug = 0;
 					$mail->isSMTP();
-					$mail->Host = 'smtp.free.fr';
+					$mail->Host = 'smtp.ionos.fr';
 					$mail->SMTPAuth = true;
-					$mail->Username = 'contact.poker31@free.fr';
-					$mail->Password = 'Kookies7*fb';
+					$mail->Username = 'admin@poker31.org';
+					$mail->Password = 'Kookies7*p';
 					$mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
 					$mail->Port = 465;
-					$mail->setFrom('contact.poker31@free.fr', 'wenger.franck@gmail.com');
+					$mail->setFrom('admin@poker31.org', 'Admin@Poker31.Org');
 					$mail->addAddress($email, 'Utilisateur-Poker31');
-					$mail->addReplyTo('contact.poker31@free.fr', 'Administrateur');
+					$mail->addReplyTo('admin@poker31.org', 'Administrateur');
 					$mail->isHTML(true);
 					$mail->Subject = 'AR Inscription www.poker31.org';
 					$mail->Body = '<p>Votre inscription est prise en compte</p><p>Votre ordre d inscription est : ' . $ordre . '</p><p> Reset mot de passe : <a href="http://poker31.org/reg/change-Password.php?Reset=' . $reset . '">"http://poker31.org/reg/change-Password.php?Reset=' . $reset . '"</a></p>' . '<p> Lien activité : <b><a href="http://poker31.org/panel/voir-activite.php?uid=' . $num_activite . '">"http://poker31.org/panel/voir-activite.php?uid=' . $num_activite . '"</a></p>';
@@ -111,7 +103,7 @@
 			}
 			?>
 			<script type="text/javascript">
-				window.location.replace("/panel/voir-activite0903-16.php?uid=<?php echo $activi ?>");
+				window.location.replace("/panel/voir-activite.php?uid=<?php echo $num_activite ?>");
 			</script>
 			<?php
 		}
@@ -2871,12 +2863,11 @@
 																								?>
 																									<option value="<?php echo htmlentities($row2['id-membre']); ?>">
 																										<?php echo htmlentities($row2['pseudo']); ?>
-																									</option>;
-																									<?php $idm=$row2['id-membre']; ?>
+																									</option>
 																								<?php } ?>
 																							</select>
 																						</td>
-																						<?php $idm=$row2['id-membre']; ?>
+
 																						<td style="display:yes" ; colspan="2">
 																							<select name="activi" value="activi" class="form-control" required="false">
 																								<option value="<?php echo htmlentities($id); ?>">

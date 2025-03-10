@@ -75,7 +75,6 @@ if (isset($_POST['submit']) ) {
 if (isset($_POST['submito'])) {
     try {
         // Validate and cast numeric fields
-        $def_str = filter_var($_POST['def_str'], FILTER_VALIDATE_INT);
         $def_nbj = filter_var($_POST['def_nbj'], FILTER_VALIDATE_INT);
         $def_buy = filter_var($_POST['def_buy'], FILTER_VALIDATE_INT);
         $def_rak = filter_var($_POST['def_rak'], FILTER_VALIDATE_INT);
@@ -85,13 +84,15 @@ if (isset($_POST['submito'])) {
         $def_bon = filter_var($_POST['def_bon'], FILTER_VALIDATE_INT);
         $def_add = filter_var($_POST['def_add'], FILTER_VALIDATE_INT);
         $def_ant = filter_var($_POST['def_ant'], FILTER_VALIDATE_INT);
-          
+        
         // Sanitize string fields
         $def_nomact = mysqli_real_escape_string($con, $_POST['def_nomact']);
-        $def_rdv = mysqli_real_escape_string($con, $_POST['def_rdv']);
-        $def_sta = mysqli_real_escape_string($con, $_POST['def_sta']);
-        $def_com = mysqli_real_escape_string($con, $_POST['def_com']);
-      
+        $def_str = mysqli_real_escape_string($con, $_POST['def_str']);
+        $def_bou = mysqli_real_escape_string($con, $_POST['def_bou']);
+        $def_rec = mysqli_real_escape_string($con, $_POST['def_rec']);
+        $def_jet = mysqli_real_escape_string($con, $_POST['def_jet']);
+        $def_bon = mysqli_real_escape_string($con, $_POST['def_bon']);
+
         $stmt = mysqli_prepare($con, "UPDATE membres SET 
             def_nomact = ?,
             def_str = ?,
@@ -103,10 +104,7 @@ if (isset($_POST['submito'])) {
             def_jet = ?,
             def_bon = ?,
             def_add = ?,
-            def_ant = ?,
-            def_rdv = ?,
-            def_sta = ?,
-            def_com = ?
+            def_ant = ?
             WHERE `id-membre` = ?");
 
         if (!$stmt) {
@@ -114,7 +112,7 @@ if (isset($_POST['submito'])) {
         }
 
         // Bind with proper types: s=string, i=integer, d=double/float
-        if (!mysqli_stmt_bind_param($stmt, 'siiiiiiiiiisssi', 
+        if (!mysqli_stmt_bind_param($stmt, 'siiiiiiiiiii', 
             $def_nomact,
             $def_str,
             $def_nbj,
@@ -126,9 +124,6 @@ if (isset($_POST['submito'])) {
             $def_bon,
             $def_add,
             $def_ant,
-            $def_rdv,
-            $def_sta,
-            $def_com,
             $id)) {
             throw new Exception("Binding parameters failed: " . mysqli_stmt_error($stmt));
         }
@@ -428,7 +423,7 @@ if (isset($_POST['submit4'])) {
                         <div id="contenu">
                             <div id="auCentre">
                                 <div id="bMenu">
-                                    <a href="#" id="css" class="btnnav" onmouseover="afficher('css')">Joueur</a>
+                                    <a href="#" id="css" class="btnnav" onmouseover="afficher('css')">JoueuR</a>
                                     <a href="#" id="css2" class="btnnav" onmouseover="afficher('css2')">Orga.</a>
                                     <a href="#" id="js" class="btnnav" onmouseover="afficher('js')">Compét.</a>
                                     <a href="#" id="php" class="btnnav" onmouseover="afficher('php')">Loisirs</a>
@@ -627,7 +622,7 @@ if (isset($_POST['submit4'])) {
                                                                             </tr>
                                                                             <tr>
                                                                                 <th style="color: #ffffff !important;">Structure</th>
-                                                                                <td><input class="form-control" id="def_str" name="def_str" type="text" value="<?php echo $row['def_str']; ?>">
+                                                                                <td><input class="form-control" id="def_str" name="def_str" type="integer" value="<?php echo $row['def_str']; ?>">
                                                                                 </td>
                                                                                 <th style="color: #ffffff !important;">Nb Joueurs</th>
                                                                                 <td><input class="form-control" id="def_nbj" name="def_nbj" type="text" value="<?php echo $row['def_nbj']; ?>">
@@ -664,18 +659,6 @@ if (isset($_POST['submit4'])) {
                                                                                 <th style="color: #ffffff !important;">Ante</th>
                                                                                 <td><input class="form-control" id="def_ant" name="def_ant" type="text" value="<?php echo $row['def_ant']; ?>">
                                                                                 </td>
-                                                                            </tr>
-                                                                            <tr>
-                                                                                <th style="color: #ffffff !important;">Rendez-vous</th>
-                                                                                <td><input class="form-control" id="def_rdv" name="def_rdv" type="text" value="<?php echo $row['def_rdv']; ?>">
-                                                                                </td>
-                                                                                <th style="color: #ffffff !important;">Debut</th>
-                                                                                <td><input class="form-control" id="def_sta" name="def_sta" type="text" value="<?php echo $row['def_sta']; ?>">
-                                                                                </td>
-                                                                            </tr>
-                                                                            <tr>
-                                                                                <th style="color: #ffffff !important;">Commentaire</th>
-                                                                                <td colspan="3"><input class="form-control" id="def_com" name="def_com" type="text" value="<?php echo $row['def_com']; ?>"></td>
                                                                             </tr>
                                                                             <tr>
                                                                                 <td colspan="4"></td>
@@ -1058,7 +1041,7 @@ if (isset($_POST['submit4'])) {
                                                                 <div class="col-lg-8 col-md-12">
                                                                     <div class="panel panel-white">
                                                                         <div class="panel-heading">
-                                                                            <h5 class="panel-title">Activites</h5>
+                                                                            <h5 class="panel-title">Ajout Personne</h5>
                                                                         </div>
                                                                         <div class="panel-body">
                                                                             <div id="layoutSidenav_content">
@@ -1067,7 +1050,7 @@ if (isset($_POST['submit4'])) {
                                                                                         <!--    <h1 class="mt-4">Gestion des Competences</h1> -->
                                                                                         <ol class="breadcrumb mb-4">
                                                                                             <li class="breadcrumb-item">
-                                                                                                <a href="liste-membres.php">Joueur</a>
+                                                                                                <a href="liste-membres.php">Membres</a>
                                                                                             </li>
                                                                                             <li class="breadcrumb-item active">
                                                                                                 Activités
@@ -1226,7 +1209,7 @@ if (isset($_POST['submit4'])) {
         }
     </script>
     <script type="text/javascript" language="javascript">
-        afficher('ks');
+        afficher('css');
     </script>
 
 </body>

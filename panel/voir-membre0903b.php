@@ -90,7 +90,6 @@ if (isset($_POST['submito'])) {
         $def_nomact = mysqli_real_escape_string($con, $_POST['def_nomact']);
         $def_rdv = mysqli_real_escape_string($con, $_POST['def_rdv']);
         $def_sta = mysqli_real_escape_string($con, $_POST['def_sta']);
-        $def_com = mysqli_real_escape_string($con, $_POST['def_com']);
       
         $stmt = mysqli_prepare($con, "UPDATE membres SET 
             def_nomact = ?,
@@ -105,8 +104,7 @@ if (isset($_POST['submito'])) {
             def_add = ?,
             def_ant = ?,
             def_rdv = ?,
-            def_sta = ?,
-            def_com = ?
+            def_sta = ?
             WHERE `id-membre` = ?");
 
         if (!$stmt) {
@@ -114,7 +112,7 @@ if (isset($_POST['submito'])) {
         }
 
         // Bind with proper types: s=string, i=integer, d=double/float
-        if (!mysqli_stmt_bind_param($stmt, 'siiiiiiiiiisssi', 
+        if (!mysqli_stmt_bind_param($stmt, 'siiiiiiiiiissi', 
             $def_nomact,
             $def_str,
             $def_nbj,
@@ -128,7 +126,6 @@ if (isset($_POST['submito'])) {
             $def_ant,
             $def_rdv,
             $def_sta,
-            $def_com,
             $id)) {
             throw new Exception("Binding parameters failed: " . mysqli_stmt_error($stmt));
         }
@@ -428,7 +425,7 @@ if (isset($_POST['submit4'])) {
                         <div id="contenu">
                             <div id="auCentre">
                                 <div id="bMenu">
-                                    <a href="#" id="css" class="btnnav" onmouseover="afficher('css')">Joueur</a>
+                                    <a href="#" id="css" class="btnnav" onmouseover="afficher('css')">JoueuR</a>
                                     <a href="#" id="css2" class="btnnav" onmouseover="afficher('css2')">Orga.</a>
                                     <a href="#" id="js" class="btnnav" onmouseover="afficher('js')">Compét.</a>
                                     <a href="#" id="php" class="btnnav" onmouseover="afficher('php')">Loisirs</a>
@@ -672,10 +669,6 @@ if (isset($_POST['submit4'])) {
                                                                                 <th style="color: #ffffff !important;">Debut</th>
                                                                                 <td><input class="form-control" id="def_sta" name="def_sta" type="text" value="<?php echo $row['def_sta']; ?>">
                                                                                 </td>
-                                                                            </tr>
-                                                                            <tr>
-                                                                                <th style="color: #ffffff !important;">Commentaire</th>
-                                                                                <td colspan="3"><input class="form-control" id="def_com" name="def_com" type="text" value="<?php echo $row['def_com']; ?>"></td>
                                                                             </tr>
                                                                             <tr>
                                                                                 <td colspan="4"></td>
@@ -1058,7 +1051,7 @@ if (isset($_POST['submit4'])) {
                                                                 <div class="col-lg-8 col-md-12">
                                                                     <div class="panel panel-white">
                                                                         <div class="panel-heading">
-                                                                            <h5 class="panel-title">Activites</h5>
+                                                                            <h5 class="panel-title">Ajout Personne</h5>
                                                                         </div>
                                                                         <div class="panel-body">
                                                                             <div id="layoutSidenav_content">
@@ -1067,7 +1060,7 @@ if (isset($_POST['submit4'])) {
                                                                                         <!--    <h1 class="mt-4">Gestion des Competences</h1> -->
                                                                                         <ol class="breadcrumb mb-4">
                                                                                             <li class="breadcrumb-item">
-                                                                                                <a href="liste-membres.php">Joueur</a>
+                                                                                                <a href="liste-membres.php">Membres</a>
                                                                                             </li>
                                                                                             <li class="breadcrumb-item active">
                                                                                                 Activités
@@ -1225,8 +1218,8 @@ if (isset($_POST['submit4'])) {
             leCalque.className = "btnnavA";
         }
     </script>
-    <script type="text/javascript" language="javascript">
-        afficher('ks');
+    <script type="text/javascript" language="javascript"></script>
+        afficher('css');
     </script>
 
 </body>
