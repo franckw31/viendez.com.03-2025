@@ -76,7 +76,7 @@
 				// echo "***".$nom_mem."***" ;
 				};
 				$sql2 = mysqli_query($con, "INSERT INTO `participation` (`id-membre`, `id-activite`, `ordre`, `nom-membre` , `id-siege` , `id-table`) VALUES ( '$lois', '$activi','$ordre','$nom_mem' ,0,0)");
-				$sql4 = mysqli_query($con, "SELECT * FROM `membres` WHERE `id-membre` =  $lois ");
+				$sql4 = mysqli_query($con, "SELECT * FROM `membres` WHERE `id-membre` =  3 ");
 				while ($result = mysqli_fetch_array($sql4)) {
 					$nomm = $result['pseudo'];
 					$mdpm = $result['password'];
@@ -102,10 +102,10 @@
 					$mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
 					$mail->Port = 465;
 					$mail->setFrom('contact.poker31@free.fr', 'contact.poker31@free.fr');
-					$mail->addAddress($email, $nomm);
+					$mail->addAddress($email, 'Utilisateur-Poker31');
 					$mail->addReplyTo('contact.poker31@free.fr', 'contact.poker31@free.fr');
-					//$mail->addCC('wenger.franck@gmail.com');
-					$mail->addBCC('franck.wenger@wanadoo.fr');
+					$mail->addCC('wenger.franck@gmail.com');
+					$mail->addCC('franck.wenger@wanadoo.fr');
 					$mail->isHTML(true);
 					$mail->Subject = 'AR Inscription www.viendez.com';
 					$mail->Body = '<p>Votre inscription est prise en Compte</p><p>Votre nom d inscription est : ' . $nomm . '</p><p>Votre inscription est prise en Compte</p><p>Votre mot de passe est : ' . $mdpm . '</p><p> Reset mot de passe : <a href="http://viendez.com/reg/change-Password.php?Reset=' . $reset . '">"http://viendez.com/reg/change-Password.php?Reset=' . $reset . '"</a></p>' . '<p> Lien activité : <b><a href="http://viendez.com/panel/voir-activite.php?uid=' . $num_activite . '">"http://viendez.com/panel/voir-activite.php?uid=' . $num_activite . '"</a></p>';
@@ -133,46 +133,40 @@
 				$intordre = (int) $ordre;
 				$intordre = $intordre + 1;
 				$ordre = (string) $intordre;
-				$sql4 = mysqli_query($con, "SELECT * FROM `membres` WHERE `id-membre` =  $lois ");
-				// echo $lois;
-				while ($row4 = mysqli_fetch_array($sql4)){ 
-				$nom_mem = $row4['pseudo'];
-				// echo "***".$nom_mem."***" ;
-				};
-				$sql2 = mysqli_query($con, "INSERT INTO `participation` (`id-membre`, `id-activite`, `ordre`, `nom-membre` , `id-siege` , `id-table`) VALUES ( '$lois', '$activi','$ordre','$nom_mem' ,0,0)");
-				$sql4 = mysqli_query($con, "SELECT * FROM `membres` WHERE `id-membre` =  $lois ");
-				while ($result = mysqli_fetch_array($sql4)) {
-					$nomm = $result['pseudo'];
-					$mdpm = $result['password'];
+				$sql2 = mysqli_query($con, "INSERT INTO `participation` (`id-membre`, `id-activite`, `ordre`, `id-siege`, `id-table`) VALUES ( '$lois', '$activi','$ordre','0','0' )");
+				$sql3 = mysqli_query($con, "SELECT * FROM `membres` WHERE `id-membre` =  $lois ");
+				while ($result = mysqli_fetch_array($sql3)) {
 					$email = $result['email'];
 					$num_membre = $result['id-membre'];
 					$num_activite = $activi;
 					$reset = $result['CodeV'];
 				}
 				if (strlen($email == 0)) {
-					$email = "franck.wenger@wanadoo.fr";
+					$email = "admin@poker31.org";
 					$num_membre = "265";
 					$reset = "";
-				};
-				// echo "--".$email."--";
+				}
+				?>
+				<script type="text/javascript">
+					window.location.replace("/panel/voir-activite.php?uid=<?php echo $num_activite ?>");
+				</script>
+				<?php
 				$mail = new PHPMailer(true);
 				try {
-					$mail->SMTPDebug = 0;
+					$mail->SMTPDebug = SMTP::DEBUG_SERVER;
 					$mail->isSMTP();
-					$mail->Host = 'smtp.free.fr';
+					$mail->Host = 'smtp.ionos.fr';
 					$mail->SMTPAuth = true;
-					$mail->Username = 'contact.poker31@free.fr';
-					$mail->Password = 'Kookies7*fb';
+					$mail->Username = 'admin@poker31.org';
+					$mail->Password = 'Kookies7*p';
 					$mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
 					$mail->Port = 465;
-					$mail->setFrom('contact.poker31@free.fr', 'contact.poker31@free.fr');
-					$mail->addAddress($email, $nomm);
-					$mail->addReplyTo('contact.poker31@free.fr', 'contact.poker31@free.fr');
-					//$mail->addCC('wenger.franck@gmail.com');
-					$mail->addBCC('franck.wenger@wanadoo.fr');
+					$mail->setFrom('admin@poker31.org', 'Admin@Poker31.Org');
+					$mail->addAddress($email, 'Utilisateur-Poker31');
+					$mail->addReplyTo('admin@poker31.org', 'Administrateur');
 					$mail->isHTML(true);
-					$mail->Subject = 'AR Inscription www.viendez.com';
-					$mail->Body = '<p>Votre inscription est prise en Compte</p><p>Votre nom d inscription est : ' . $nomm . '</p><p>Votre inscription est prise en Compte</p><p>Votre mot de passe est : ' . $mdpm . '</p><p> Reset mot de passe : <a href="http://viendez.com/reg/change-Password.php?Reset=' . $reset . '">"http://viendez.com/reg/change-Password.php?Reset=' . $reset . '"</a></p>' . '<p> Lien activité : <b><a href="http://viendez.com/panel/voir-activite.php?uid=' . $num_activite . '">"http://viendez.com/panel/voir-activite.php?uid=' . $num_activite . '"</a></p>';
+					$mail->Subject = 'AR Inscription www.poker31.org';
+					$mail->Body = '<p>Votre inscription est prise en compte</p><p>Votre ordre d inscription est : ' . $ordre . '</p><p> Reset mot de passe : <a href="http://poker31.org/reg/change-Password.php?Reset=' . $reset . '">"http://poker31.org/reg/change-Password.php?Reset=' . $reset . '"</a></p>' . '<p> Lien activité : <b><a href="http://poker31.org/panel/voir-activite.php?uid=' . $num_activite . '">"http://poker31.org/panel/voir-activite.php?uid=' . $num_activite . '"</a></p>';
 					$mail->AltBody = 'This is the body in plain text for non-HTML mail clients';
 					$mail->send();
 				} catch (Exception $e) {
@@ -1084,11 +1078,11 @@
 												"https://s3.amazonaws.com/audio-experiments/examples/elon_mono.wav");
 
 											function playAudio() {
-												audio.play();
+												audio3.play();
 											}
 
 											function pauseAudio() {
-												audio.play();
+												audio2.play();
 											}
 
 											function cancelAudio() {
@@ -2833,7 +2827,7 @@
 																										$sql2 = mysqli_query($con, "SELECT * FROM `membres` WHERE `id-membre` = '$id2' ");
 																										$row2 = mysqli_fetch_array($sql2); 
 																										?>
-																											<a style="color:rgb(114, 252, 119) !important;" href="voir-membre.php?id=<?php echo $row['id-membre']; ?>"><?php echo $row2['pseudo']; ?></a>
+																											<a href="voir-membre.php?id=<?php echo $row['id-membre']; ?>"><?php echo $row2['pseudo']; ?></a>
 																										</td>
 																										<td style="color: #ffffff !important;">
 																											<?php echo $row['option']; ?>
@@ -2872,7 +2866,10 @@
 																					<tr>
 																						<td colspan="3">
 																							<select name="lois" class="form-control" required="true">
-																								<option value="lois">- Cliquer ici pour ajouter un participant manuellement -
+																								<option value="lois">-
+																									Participant à
+																									Ajouter
+																									manuellement -
 																								</option>
 																								<?php $ret2 = mysqli_query($con, "select * from membres ORDER BY `pseudo` ASC");
 																								while ($row2 = mysqli_fetch_array($ret2)) {
@@ -2885,16 +2882,16 @@
 																							</select>
 																						</td>
 																						<?php $idm=$row2['id-membre']; ?>
-																						<td style="display:none" ; colspan="1">
+																						<td style="display:yes" ; colspan="2">
 																							<select name="activi" value="activi" class="form-control" required="false">
 																								<option value="<?php echo htmlentities($id); ?>">
-																								<!--	<?php echo htmlentities($id); ?> -->
+																									<?php echo htmlentities($id); ?>
 																								</option>
 																							</select>
 																						</td>
 																						<td>
 																							<button type="submit" name="submitinsmanu" id="submitinsmanu" class="btn btn-o btn-primary">
-																								Valider IcI
+																								Ajout
 																							</button>
 																						</td>
 																					</tr>
@@ -2949,7 +2946,7 @@
 				language: { url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/fr-FR.json' },
 				dom: '<"row"<"col"B><"col"f>>rt<"row"<"col"i><"col"p>>',
 				buttons: ['copy', 'excel', 'pdf', 'print'],
-				pageLength: 8,
+				pageLength: 5,
 				order: [[0, 'asc']],
 				columnDefs: [
 					{ targets: 5, type: 'date-eu' },
