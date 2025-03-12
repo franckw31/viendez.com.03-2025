@@ -31,23 +31,19 @@
 		if (isset($_POST['submit'])) {
 			// Sanitize and validate inputs
 			$titre_activite = mysqli_real_escape_string($con, $_POST['titre-activite']);
-			$date_depart = mysqli_real_escape_string($con, $_POST['date_depart']);			
+			$date_depart = mysqli_real_escape_string($con, $_POST['date_depart']);
+			
 			// Validate time format
 			$heure_depart = mysqli_real_escape_string($con, $_POST['heure_depart']);
-			//echo "*".$heure_depart."*";
 			if (!empty($heure_depart)) {
 				$time = DateTime::createFromFormat('H:i', $heure_depart);
-				//echo "-".$time."-";
-				if (1) {
-					//echo "oui";
-					//$heure_depart = $time;
-				//	$heure_depart = $time->format('H:i');
+				if ($time) {
+					$heure_depart = $time->format('H:i');
 				} else {
-					//echo "non";
-					$heure_depart = '00:01';
+					$heure_depart = '00:00';
 				}
-			}; 
-			//echo "/".$heure_depart."/";
+			}
+
 			$ville = mysqli_real_escape_string($con, $_POST['ville']);
 			$places = intval($_POST['places']);
 			$rake = floatval($_POST['rake']);
@@ -65,12 +61,11 @@
 			$lat = floatval($_POST['lat']);
 			$nb_tables = intval($_POST['nb-tables']);
 			$idmembresession = intval($_SESSION['id']);
-			$id_org = intval($_POST['id_org']);
 
 			// Get organizer info
 			$orga = mysqli_query($con, "SELECT * FROM `activite` WHERE `id-activite` = '$id'");
 			$resorga = mysqli_fetch_array($orga);
-		//	$id_org = $resorga["id-membre"];
+			$id_org = $resorga["id-membre"];
 			
 			if (($idmembresession == $idmembre) || ($idmembresession == 265)) {
 				if ($idmembre == $id_org) {
@@ -344,7 +339,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="fr">
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-16" />
-	<meta http-equiv="refresh" content="120">
+	<meta http-equiv="refresh" content="30">
 	<title>Admin | Edition Membre</title>
 	<link href="http://fonts.googleapis.com/css?family=Lato:300,400,400italic,600,700|Raleway:300,400,500,600,700|Crete+Round:400italic" rel="stylesheet" type="text/css" />
 	<link rel="stylesheet" href="vendor/bootstrap/css/bootstrap.min.css">
@@ -974,7 +969,7 @@
 																	$sql = mysqli_query($con, "SELECT * FROM `activite` WHERE `id-activite` =  '$id'");
 																	while ($row = mysqli_fetch_array($sql)) {
 																		$id_org = $row["id-membre"];
-																		echo "++".$id_org."++".$old_org."++";
+																		echo "++".$id_org."++";
 																		$sql2 = mysqli_query($con, "SELECT * FROM `membres` WHERE `id-membre` =  '$id_org'");
 																		while ($row2 = mysqli_fetch_array($sql2)) {
 																			$nom_org = $row2['pseudo'];
@@ -1028,12 +1023,12 @@
 																				</td>
 																				<th style="color: #ffffff !important;"><a href="creation-blindes.php?act=<?php echo $row['id-activite']; ?>&sou=/panel/voir-activite.php">Heure</a>
 																				</th>
-																				<td><input class="fform-control" id="heure_depart" name="heure_depart" type="text" value="<?php echo $row['heure_depart']; ?>">
+																				<td><input class="fform-control" id="heure_depart" name="heure_depart" type="time" value="<?php echo $row['heure_depart']; ?>">
 																				</td>
 																			</tr>
 																			<tr>
 																				<th style="color: #ffffff !important;"><a href="voir-membre.php?id=<?php echo $row['id-membre']; ?>">Orga:
-																					<?php echo "" . $nom_org . ""; $old_org=$row['id-membre']; ?></a>
+																					<?php echo "" . $nom_org . ""; ?></a>
 																				</th>
 																				<td><?php
 																					$membres = mysqli_query($con, "SELECT `id-membre`,`pseudo` FROM `membres` ORDER BY `pseudo` ASC");
@@ -1997,7 +1992,7 @@
 												$p2 = round($p2, 0);
 												$p2 = $p2 * 10;
 												$p1 = $final - $p2;
-													?>
+												?>
 													<div class='info4-content '>
 														<?php echo "Pot total : " . $final . "€ soit : " . "P1=" . $p1 . "€, P2=" . $p2 . "€" ?>
 													</div>
@@ -2014,7 +2009,7 @@
 												$p2 = round($p2, 0);
 												$p2 = $p2 * 10;
 												$p1 = $final - $p3 - $p2;
-													?>
+												?>
 													<div class='info4-content '>
 														<?php echo "Pot total : " . $final . "€ soit : " . "P1=" . $p1 . "€, P2=" . $p2 . "€, P3=" . $p3 . "€" ?>
 													</div>
@@ -2035,10 +2030,10 @@
 												$p2 = round($p2, 0);
 												$p2 = $p2 * 10;
 												$p1 = $final - $p4 - $p3 - $p2;
-													?>
+												?>
 													<div class='info4-content '>
 														<?php echo "Pot total : " . $final . "€ soit : " . "P1=" . $p1 . "€, P2=" . $p2 . "€, P3=" . $p3 . "€, P4=" . $p4 . "€" ?>
-													</div>
+														</div>
 												<?php
 												}
 												;
@@ -2060,7 +2055,7 @@
 												$p2 = round($p2, 0);
 												$p2 = $p2 * 10;
 												$p1 = $final - $p5 - $p4 - $p3 - $p2;
-													?>
+												?>
 													<div class='info4-content '>
 														<?php echo "Pot total : " . $final . "€ soit : " . "P1=" . $p1 . "€, P2=" . $p2 . "€, P3=" . $p3 . "€, P4=" . $p4 . "€, P5=" . $p5 . "€" ?>
 													</div>
