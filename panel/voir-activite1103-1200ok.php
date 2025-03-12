@@ -8,7 +8,6 @@
 	use PHPMailer\PHPMailer\Exception;
 
 	include_once('include/config.php');
-	$modifmembre = 0;
 	$ret = mysqli_query($con, "SELECT * FROM `activite` WHERE 1");
 	while ($row = mysqli_fetch_array($ret)) {
 		$pointeur = $row["id-activite"];
@@ -50,13 +49,8 @@
 			$addon = $_POST['addon'];
 			$nb_tables = $_POST['nb-tables'];
 			$idmembresession = $_SESSION['id'];
-			echo "**".$idmembre."**";
 			if (($idmembresession == $idmembre) or ($idmembresession == 265)) {
-				echo "Av".$id.$heure_depart."//".$modifmembre."//";
-			//	$msg = mysqli_query($con, "UPDATE `activite` SET `id-membre` = '$idmembre' ,`titre-activite` = '$titre_activite' , `date_depart` = '$date_depart' , `heure_depart` = `$heure_depart` ,`ville` = '$ville' , `places` = '$places' , `nb-tables` = '$nb_tables' , `commentaire` = '$commentaire' , `buyin` = '$buyin' , `rake` = '$rake' , `bounty` = '$bounty' , `jetons` = '$jetons' , `recave` = '$recave' , `addon` = '$addon' , `ante` = '$ante' , `bonus` = '$bonus' , `lng` = '$lng' , `lat` = '$lat' WHERE `id-activite` = '$id'");
-				if (isset($idmembre)) {$msg = mysqli_query($con, "UPDATE `activite` SET `id-membre` = '$idmembre' ,`titre-activite` = '$titre_activite' , `date_depart` = '$date_depart' , `heure_depart` = '$heure_depart', `ville` = '$ville' , `places` = '$places' , `nb-tables` = '$nb_tables' , `commentaire` = '$commentaire' , `buyin` = '$buyin' , `rake` = '$rake' , `bounty` = '$bounty' , `jetons` = '$jetons' , `recave` = '$recave' , `addon` = '$addon' , `ante` = '$ante' , `bonus` = '$bonus' , `lng` = '$lng' , `lat` = '$lat' WHERE `id-activite` = '$id'");unset($idmembre);
-				} else {$msg = mysqli_query($con, "UPDATE `activite` SET `titre-activite` = '$titre_activite' , `date_depart` = '$date_depart' , `heure_depart` = '$heure_depart', `ville` = '$ville' , `places` = '$places' , `nb-tables` = '$nb_tables' , `commentaire` = '$commentaire' , `buyin` = '$buyin' , `rake` = '$rake' , `bounty` = '$bounty' , `jetons` = '$jetons' , `recave` = '$recave' , `addon` = '$addon' , `ante` = '$ante' , `bonus` = '$bonus' , `lng` = '$lng' , `lat` = '$lat' WHERE `id-activite` = '$id'");}
-				
+				$msg = mysqli_query($con, "UPDATE `activite` SET `id-membre` = '$idmembre' ,`titre-activite` = '$titre_activite' , `date_depart` = '$date_depart' , `heure_depart` = '$heure_depart' ,`ville` = '$ville' , `places` = '$places' , `nb-tables` = '$nb_tables' , `commentaire` = '$commentaire' , `buyin` = '$buyin' , `rake` = '$rake' , `bounty` = '$bounty' , `jetons` = '$jetons' , `recave` = '$recave' , `addon` = '$addon' , `ante` = '$ante' , `bonus` = '$bonus' , `lng` = '$lng' , `lat` = '$lat' WHERE `id-activite` = '$id'");
 			}
 		}
 		
@@ -960,7 +954,7 @@
 																				</td>
 																				<th style="color: #ffffff !important;"><a href="creation-blindes.php?act=<?php echo $row['id-activite']; ?>&sou=/panel/voir-activite.php">Heure</a>
 																				</th>
-																				<td><input class="fform-control" id="heure_depart" name="heure_depart" type="time" value="<?php echo $row['heure_depart']; ?>">
+																				<td><input class="form-control" id="heure_depart" name="heure_depart" type="timestamp" value="<?php echo $row['heure_depart']; ?>">
 																				</td>
 																			</tr>
 																			<tr>
@@ -972,10 +966,8 @@
 																					echo "<align='center' class='rougesurblanc'><select name=id-membre><option value=$monmembre>--> Changer Organisateur IcI <--";
 																					while ($choix = mysqli_fetch_assoc($membres)) {
 																						$listepseudo = $choix['pseudo'];
-																						$modifmembre = 1;
 																						echo "<option value={$choix["id-membre"]}>{$choix["pseudo"]}\n";
 																					}
-																					$modifmembre = 1;
 																					echo "</select>";
 																					?>
 																				</td>

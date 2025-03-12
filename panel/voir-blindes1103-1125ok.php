@@ -283,44 +283,30 @@ window.location.replace("/panel/de-pause.php?act=<?php echo $id ?>&sou=/panel/vo
 
                                     if ($nbt == '3') { ?>
                                 <div id="bMenu">
-                                    <a href="#" id="Timer" class="btnnav" onmouseover="afficher2('Timer')">Timer</a>
-                                    <a href="#" id="Blindes" class="btnnav"
-                                        onmouseover="afficher2('Blindes')">Blindes</a>
-                                    <a href="#" id="Structure" class="btnnav"
-                                        onmouseover="afficher2('Structure')">Modèles</a>
-                                    <a href="#" id="Outils" class="btnnav" onmouseover="afficher2('Outils')">Outils</a>
-                                    <!-- <a href="#" id="t3" class="btnnav" onmouseover="afficher2('t3')">Table 3</a> --> 
-                                    <!-- <a href="#" id="t4" class="btnnav" onmouseover="afficher2('t4')">Table 4</a> -->
+                                    <a href="#" id="infos" class="btnnav" onmouseover="afficher3('infos')">Infos</a>
+                                    <a href="#" id="inscrits" class="btnnav"
+                                        onmouseover="afficher3('inscrits')">Inscrits</a>
+                                    <a href="#" id="t1" class="btnnav" onmouseover="afficher3('t1')">Table 1</a>
+                                    <a href="#" id="t2" class="btnnav" onmouseover="afficher3('t2')">Table 2</a>
+                                    <a href="#" id="t3" class="btnnav" onmouseover="afficher3('t3')">Table 3</a>
+                                    <!-- <a href="#" id="t4" class="btnnav" onmouseover="afficher3('t4')">Table 4</a> -->
                                 </div>
                                 <?php }
                                     ;
 
                                     if ($nbt == '4') { ?>
                                 <div id="bMenu">
-                                    <a href="#" id="Timer" class="btnnav" onmouseover="afficher2('Timer')">Timer</a>
-                                    <a href="#" id="Blindes" class="btnnav"
-                                        onmouseover="afficher2('Blindes')">Blindes</a>
-                                    <a href="#" id="Structure" class="btnnav"
-                                        onmouseover="afficher2('Structure')">Modèles</a>
-                                    <a href="#" id="Outils" class="btnnav" onmouseover="afficher2('Outils')">Outils</a>
-                                    <!-- <a href="#" id="t3" class="btnnav" onmouseover="afficher2('t3')">Table 3</a> --> 
-                                    <!-- <a href="#" id="t4" class="btnnav" onmouseover="afficher2('t4')">Table 4</a> -->
+                                    <a href="#" id="infos" class="btnnav" onmouseover="afficher4('infos')">Infos</a>
+                                    <a href="#" id="inscrits" class="btnnav"
+                                        onmouseover="afficher4('inscrits')">Inscrits</a>
+                                    <a href="#" id="t1" class="btnnav" onmouseover="afficher4('t1')">Table 1</a>
+                                    <a href="#" id="t2" class="btnnav" onmouseover="afficher4('t2')">Table 2</a>
+                                    <a href="#" id="t3" class="btnnav" onmouseover="afficher4('t3')">Table 3</a>
+                                    <a href="#" id="t4" class="btnnav" onmouseover="afficher4('t4')">Table 4</a>
                                 </div>
                                 <?php }
                                     ;
-                                    if ($nbt == '5') { ?>
-                                <div id="bMenu">
-                                    <a href="#" id="Timer" class="btnnav" onmouseover="afficher2('Timer')">Timer</a>
-                                    <a href="#" id="Blindes" class="btnnav"
-                                                onmouseover="afficher2('Blindes')">Blindes</a>
-                                            <a href="#" id="Structure" class="btnnav"
-                                                onmouseover="afficher2('Structure')">Modèles</a>
-                                            <a href="#" id="Outils" class="btnnav" onmouseover="afficher2('Outils')">Outils</a>
-                                            <!-- <a href="#" id="t3" class="btnnav" onmouseover="afficher2('t3')">Table 3</a> --> 
-                                            <!-- <a href="#" id="t4" class="btnnav" onmouseover="afficher2('t4')">Table 4</a> -->
-                                </div>
-                                <?php }
-                                    ;
+
 
                                     date_default_timezone_set('UTC+2');
                                     ?>
