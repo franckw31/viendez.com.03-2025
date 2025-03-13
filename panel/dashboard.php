@@ -285,7 +285,7 @@ if (strlen($_SESSION['id'] == 0)) {
 							</div>
 						</div>
 
-						<div class="col-sm-4"><a href="gestion-challenges.php">
+						<div class="col-sm-4"><a href="reglement.php">
 									<div class="ppanel panel-white-regles no-radius text-center">
 										<div class="panel-body">
 											<span class="fa-stack fa-4x"> 
@@ -350,7 +350,7 @@ if (strlen($_SESSION['id'] == 0)) {
 									</div>
 								</div>
 
-								<div class="col-sm-4"><a href="gestion-challenges.php">
+								<div class="col-sm-4"><a href="reglement.php">
 									<div class="panel panel-white no-radius text-center">
 										<!-- <div class="panel-body"> -->
 											<span class="ffa-stack fa-2x"> 
