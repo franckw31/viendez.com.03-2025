@@ -1108,15 +1108,177 @@
         </div>
     </div>
 
+    <div class="article">
+        <div class="article-header"><h2>RÉPARTITION DES GAINS EN MTT HOLD'EM ET OMAHA</h2></div>
+        <div class="sub-article">
+            <style>
+                .gains-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin: 20px 0;
+                    background-color: rgba(255, 255, 255, 0.95);
+                }
+                
+                .gains-table th, .gains-table td {
+                    border: 1px solid #2c3e50;
+                    padding: 8px;
+                    text-align: center;
+                }
+                
+                .gains-table th {
+                    background-color: #34495e;
+                    color: white;
+                }
+                
+                .gains-table tr:nth-child(even) {
+                    background-color: rgba(255, 255, 255, 0.7);
+                }
+                
+                .gains-table tr:hover {
+                    background-color: rgba(52, 152, 219, 0.1);
+                }
+            </style>
+            <table class="gains-table">
+                <tr>
+                    <th>Participants</th>
+                    <th>6 à 9</th>
+                    <th>10 à 16</th>
+                    <th>17 à 22</th>
+                    <th>23 à 30</th>
+                    <th>31 à 36</th>
+                    <th>37 à 40</th>
+                    <th>41 à 45</th>
+                    <th>46 à 50</th>
+                </tr>
+                <tr>
+                    <th>Classement</th>
+                    <th>2 premiers</th>
+                    <th>3 premiers</th>
+                    <th>4 premiers</th>
+                    <th>5 premiers</th>
+                    <th>6 premiers</th>
+                    <th>7 premiers</th>
+                    <th>8 premiers</th>
+                    <th>9 premiers</th>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>60 %</td>
+                    <td>50 %</td>
+                    <td>45 %</td>
+                    <td>45 %</td>
+                    <td>40 %</td>
+                    <td>35 %</td>
+                    <td>30 %</td>
+                    <td>25 %</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>40 %</td>
+                    <td>30 %</td>
+                    <td>30 %</td>
+                    <td>25 %</td>
+                    <td>20 %</td>
+                    <td>20 %</td>
+                    <td>15 %</td>
+                    <td>15 %</td>
+                    
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>-</td>
+                    <td>20 %</td>
+                    <td>15 %</td>
+                    <td>15 %</td>
+                    <td>15 %</td>
+                    <td>15 %</td>
+                    <td>15 %</td>
+                    <td>15 %</td>
+                    
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>10 %</td>
+                    <td>10 %</td>
+                    <td>10 %</td>
+                    <td>10 %</td>
+                    <td>10 %</td>
+                    <td>10 %</td>
+                    
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>5 %</td>
+                    <td>10 %</td>
+                    <td>10 %</td>
+                    <td>10 %</td>
+                    <td>10 %</td>
+                    
+                </tr>
+                <tr>
+                    <td>6</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>5 %</td>
+                    <td>5 %</td>
+                    <td>10 %</td>
+                    <td>10 %</td>
+                    
+                </tr>
+                <tr>
+                    <td>7</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>5 %</td>
+                    <td>5 %</td>
+                    <td>5 %</td>
+                    
+                </tr>
+                <tr>
+                    <td>8</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>5 %</td>
+                    <td>5 %</td>
+                </tr>
+                <tr>
+                    <td>9</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>5 %</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
     <footer class="footer">
         <div class="footer-content">
             <div class="footer-links">
                 <a href="/indexnav.html">Accueil</a>
-                <a href="dashboard.php">Contact</a>
-                <a href="#">Mentions légales</a>
+                <a href="dashboard.php">Menus</a>
+                <!-- <a href="#">Mentions légales</a> -->
             </div>
             <div class="footer-copyright">
-                © <?php echo date('Y'); ?> Viendez.com - Tous droits réservés
+                © <?php echo date('Y'); ?> Franck.W.
             </div>
         </div>
     </footer>
