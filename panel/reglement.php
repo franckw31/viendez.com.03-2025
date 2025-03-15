@@ -8,9 +8,9 @@
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
             line-height: 1.6;
-            max-width: 1200px;
+            max-width: 100%;
             margin: 0 auto;
-            padding: 20px;
+            padding: 20px 10px;
             background: url('https://images.unsplash.com/photo-1579546929518-9e396f3cc809') no-repeat center center fixed;
             background-size: cover;
             color: #333;
@@ -241,6 +241,105 @@
             min-width: 50px;
             text-align: center;
         }
+
+        @media screen and (max-width: 768px) {
+            body {
+                padding: 10px 5px;
+                padding-top: 70px;
+                padding-bottom: 60px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+                padding: 15px 10px;
+            }
+
+            h2 {
+                font-size: 1.2em;
+            }
+
+            .article {
+                padding: 15px;
+                margin: 15px 0;
+            }
+
+            .sub-article {
+                padding: 15px;
+                margin: 10px 0;
+            }
+
+            .search-container {
+                padding: 0 5px;
+            }
+
+            #searchInput {
+                width: 100%;
+                padding: 8px;
+                font-size: 14px;
+            }
+
+            .nav-button {
+                padding: 4px 8px;
+                font-size: 12px;
+            }
+
+            .current-match {
+                min-width: 40px;
+                font-size: 12px;
+            }
+
+            .footer {
+                padding: 10px;
+            }
+
+            .footer-content {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .footer-links {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 10px;
+            }
+
+            .footer-links a {
+                margin: 0 5px;
+            }
+
+            .gains-table {
+                font-size: 12px;
+            }
+
+            .gains-table th, 
+            .gains-table td {
+                padding: 4px;
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+            .header-content {
+                flex-direction: column;
+            }
+
+            .search-navigation {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 5px;
+            }
+
+            .nav-button {
+                flex: 1;
+                min-width: 80px;
+            }
+
+            .gains-table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+        }
     </style>
 </head>
 <body>
@@ -258,8 +357,8 @@
         </div>
     </header>
 
-    <h1>REGLEMENT OFFICIEL DU POKER DE TOURNOI EN ASSOCIATION</h1>
-    <p class="subtitle">No Limit Hold'Em – Gratuit – Freezout – Sans Croupier Version 2025-02</p>
+    <h1>REGLEMENT OFFICIEL DU POKER WPT 2025</h1>
+    <p class="subtitle">No Limit Hold'Em – Sans Croupier Version 2025-02</p>
 
     <div class="article">
         <div class="article-header">ARTICLE 1 : CONCEPTS GENERAUX</div>

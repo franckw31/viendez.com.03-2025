@@ -327,7 +327,7 @@ if (strlen($_SESSION['id'] == 0)) {
 									</div>
 								</div>
 
-								<div class="col-sm-4"><a href="/indexnav.html">
+								<div class="col-sm-4"><a href="agenda.php">
 									<div class="panel panel-white-texto no-radius text-center">
 									<div class="panel-body">
 											<span class="fa-stack fa-4x"> <i
@@ -374,14 +374,14 @@ if (strlen($_SESSION['id'] == 0)) {
 									</div></a>
 								</div>
 
-								<div class="col-sm-4"><a href="/indexnav.html">
+								<div class="col-sm-4"><a href="agenda.php">
 									<div class="panel panel-white no-radius text-center">
 										<!-- <div class="panel-body"> -->
 											<span class="ffa-stack fa-2x"> 
 												<!-- <i	class="fa fa-square fa-stack-2x text-primary"></i> -->
 												<!-- <i	class="fa fa-terminal fa-stack-1x fa-inverse"></i> -->
 											</span>
-											<h2 class="StepTitle">Messagerie</h2>
+											<h2 class="StepTitle">Planning</h2>
 
 									</div></a>
 								</div>
