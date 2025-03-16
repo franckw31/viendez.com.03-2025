@@ -3,30 +3,6 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 include ('include/config.php');
 
-// Vérifier la connexion
-if (!$conn) {
-    die("Erreur de connexion à la base de données");
-}
-
-// Vérifier que la table existe
-$check_table = mysqli_query($conn, "SHOW TABLES LIKE 'activite'");
-if (mysqli_num_rows($check_table) == 0) {
-    die("La table 'activite' n'existe pas");
-}
-
-// Vérifier la structure de la table
-$check_columns = mysqli_query($conn, "DESCRIBE activite");
-$required_columns = ['id-activite', 'titre-activite', 'buyin', 'date_depart', 'end_date'];
-$existing_columns = [];
-while ($row = mysqli_fetch_assoc($check_columns)) {
-    $existing_columns[] = $row['Field'];
-}
-foreach ($required_columns as $col) {
-    if (!in_array($col, $existing_columns)) {
-        die("La colonne '$col' est manquante dans la table 'activite'");
-    }
-}
-
 // Handle month navigation properly
 $month = isset($_GET['month']) ? intval($_GET['month']) : date('m');
 $year = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
@@ -50,9 +26,9 @@ $day_of_week = date('w', $first_day);
 $month_padded = str_pad($month, 2, '0', STR_PAD_LEFT);
 
 // Modify the query to use the padded month
-$query = "SELECT * FROM activite 
-          WHERE DATE_FORMAT(date_depart, '%m') = '$month_padded' 
-          AND YEAR(date_depart) = '$year'";
+$query = "SELECT * FROM events 
+          WHERE DATE_FORMAT(start_date, '%m') = '$month_padded' 
+          AND YEAR(start_date) = '$year'";
 $result = mysqli_query($conn, $query);
 if (!$result) {
     die("Query failed: " . mysqli_error($conn));
@@ -65,7 +41,7 @@ while($row = mysqli_fetch_assoc($result)) {
 // Create events array indexed by day
 $events_by_day = [];
 foreach ($events as $event) {
-    $day = date('j', strtotime($event['date_depart']));
+    $day = date('j', strtotime($event['start_date']));
     $events_by_day[$day][] = $event;
 }
 
@@ -97,12 +73,7 @@ $days_fr = array('Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam');
             font-family: 'Google Sans', Roboto, Arial, sans-serif;
             display: flex;
             flex-direction: column;
-            padding-bottom: 60px;
-            background-image: url('img/bg.png');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-            background-repeat: no-repeat;
+            padding-bottom: 60px; /* Height of footer */
         }
         .main-container {
             flex: 1 0 auto;
@@ -111,9 +82,6 @@ $days_fr = array('Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam');
             max-width: 1200px;
             margin: 0 auto;
             margin-top: 50px; /* Réduit de 80px pour s'adapter au header plus petit */
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         .calendar-wrapper {
             width: 100%;
@@ -149,16 +117,14 @@ $days_fr = array('Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam');
             border-radius: 8px;
         }
         .calendar th {
-            padding: 5px; /* Réduit de 10px */
+            padding: 10px;
             color: #ffffff;
             font-weight: 500;
-            font-size: 12px; /* Réduit de 14px */
+            font-size: 14px;
             text-transform: uppercase;
             border-bottom: 1px solid #e0e0e0;
             border-left: 1px solid #e0e0e0;
             background-color: #1a73e8;
-            height: 20px; /* Ajout d'une hauteur fixe */
-            line-height: 20px; /* Ajout d'une hauteur de ligne */
         }
 
         .calendar th:first-child {
@@ -231,11 +197,10 @@ $days_fr = array('Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam');
             cursor: pointer; /* Add cursor pointer */
         }
         .event-title-line {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
+            cursor: pointer;
             width: 100%;
+            height: 100%;
+            display: block;
         }
         .add-event {
             opacity: 0;
@@ -364,10 +329,12 @@ $days_fr = array('Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam');
         }
         
         .event-time {
-            font-size: 12px;
-            color: #5f6368;
-            white-space: nowrap;
-            margin-left: auto;
+            font-size: 13px;
+            color: #3c4043;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
         
         .event-time::before {
@@ -552,38 +519,6 @@ $days_fr = array('Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam');
             gap: 5px;
             margin-left: auto;
         }
-
-        .event-location {
-            color: #5f6368;
-            font-size: 14px;
-            font-weight: normal;
-            white-space: nowrap;
-        }
-
-        .event-details {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 14px;
-            color: #5f6368;
-            margin-left: auto;
-        }
-
-        .event-buyin {
-            color: #1a73e8;
-            font-weight: 500;
-            white-space: nowrap;
-        }
-
-        .form-group input[type="number"] {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #e0e0e0;
-            border-radius: 4px;
-            font-size: 14px;
-            color: #3c4043;
-            transition: border-color 0.2s;
-        }
     </style>
 </head>
 <body>
@@ -651,9 +586,9 @@ $days_fr = array('Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam');
                     
                     if (isset($events_by_day[$day])) {
                         foreach ($events_by_day[$day] as $event) {
-                            echo "<div class='event' data-event-id='" . $event['id-activite'] . "' onclick='editEvent(" . $event['id-activite'] . ")'>";
+                            echo "<div class='event' data-event-id='" . $event['id'] . "' onclick='editEvent(" . $event['id'] . ")'>";
                             echo "<div class='event-title-line'>" . 
-                                 "<span class='event-title-text'>" . htmlspecialchars($event['titre-activite']) . "</span></div>";
+                                 "<span class='event-title-text'>" . htmlspecialchars($event['title']) . "</span></div>";
                             echo "</div>";
                         }
                     }
@@ -696,12 +631,8 @@ $days_fr = array('Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam');
                     <input type="text" id="eventTitle" name="title" required>
                 </div>
                 <div class="form-group">
-                    <label>Buy-in :</label>
-                    <input type="number" id="eventBuyin" name="buyin" min="0" step="1" value="0">
-                </div>
-                <div class="form-group">
-                    <label>Localisation :</label>
-                    <input type="text" id="eventLocation" name="ville">
+                    <label>Description :</label>
+                    <textarea id="eventDescription" name="description"></textarea>
                 </div>
                 <div class="date-group">
                     <div class="form-group">
@@ -710,7 +641,7 @@ $days_fr = array('Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam');
                     </div>
                     <div class="form-group">
                         <label>Date de fin :</label>
-                        <input type="datetime-local" id="eventEnd" name="heure_depart">
+                        <input type="datetime-local" id="eventEnd" name="end_date">
                     </div>
                 </div>
                 <div class="button-group">
@@ -819,28 +750,29 @@ $days_fr = array('Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam');
                         <div class="event" data-event-id="${event.id}" onclick="editEvent(${event.id})">
                             <div class="event-title-line">
                                 <strong>${event.title}</strong>
-                                <div class="event-details">
-                                    ${event.buyin > 0 ? 
-                                        `<span class="event-buyin">${event.buyin}€</span>` : 
-                                        ''}
-                                    ${event.ville ? 
-                                        `<span class="event-location"> - ${event.ville}</span>` : 
-                                        ''}
-                                    <span class="event-time">
-                                        ${new Date(event.start_date).toLocaleTimeString('fr-FR', {
+                                <span class="event-time">
+                                    ${new Date(event.start_date).toLocaleTimeString('fr-FR', {
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    })}
+                                    ${event.end_date ? 
+                                        ` - ${new Date(event.end_date).toLocaleTimeString('fr-FR', {
                                             hour: '2-digit',
                                             minute: '2-digit'
-                                        })}
-                                    </span>
-                                </div>
+                                        })}` : 
+                                        ''}
+                                </span>
                             </div>
+                            ${event.description ? 
+                                `<div class="event-description">${event.description}</div>` : 
+                                ''}
                         </div>
                     `).join('') :
                     '<p>Aucun événement ce jour</p>';
             })
             .catch(error => {
-                console.error('Erreur:', error);
-                eventsList.innerHTML = '<p>Aucun événement trouvé pour cette date</p>';
+                console.error('Error:', error);
+                eventsList.innerHTML = '<p>Erreur lors du chargement des événements</p>';
             });
     }
 
@@ -886,17 +818,16 @@ $days_fr = array('Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam');
                 document.getElementById('formTitle').textContent = `Modifier l'événement du ${eventDate}`;
                 document.getElementById('eventId').value = event.id;
                 document.getElementById('eventTitle').value = event.title || '';
-                document.getElementById('eventBuyin').value = event.buyin || '0';
-                document.getElementById('eventLocation').value = event.ville || '';
+                document.getElementById('eventDescription').value = event.description || '';
                 document.getElementById('eventStart').value = event.start_date.substr(0, 16);
-                document.getElementById('eventEnd').value = event.heure_depart ? event.heure_depart.substr(0, 16) : '';
+                document.getElementById('eventEnd').value = event.end_date ? event.end_date.substr(0, 16) : '';
                 document.getElementById('formMode').value = 'edit';
                 document.querySelector('.delete-btn').style.display = 'block';
             })
             .catch(error => {
-                console.error('Erreur:', error);
+                console.error('Error loading event:', error);
                 document.getElementById('editForm').style.display = 'none';
-                alert('Impossible de charger cet événement'); 
+                alert('Erreur lors du chargement de l\'événement');
             });
     }
 
@@ -916,19 +847,29 @@ $days_fr = array('Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam');
             method: 'POST',
             body: formData
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 hideEditForm();
-                showDayEvents(selectedDate);
-                location.reload();
+                // Refresh the current view
+                const currentDate = document.querySelector('td.today')?.dataset.date || 
+                                  document.querySelector('td[data-date]')?.dataset.date;
+                if (currentDate) {
+                    showDayEvents(currentDate);
+                }
+                location.reload(); // Refresh to show new event
             } else {
-                throw new Error(data.error || 'Erreur lors de la sauvegarde');
+                throw new Error(data.error || 'Failed to save event');
             }
         })
         .catch(error => {
-            console.error('Erreur:', error);
-            alert('Erreur: ' + error.message);
+            console.error('Error:', error);
+            alert('Error saving event: ' + error.message);
         });
         
         return false;

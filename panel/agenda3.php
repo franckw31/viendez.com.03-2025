@@ -97,12 +97,7 @@ $days_fr = array('Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam');
             font-family: 'Google Sans', Roboto, Arial, sans-serif;
             display: flex;
             flex-direction: column;
-            padding-bottom: 60px;
-            background-image: url('img/bg.png');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-            background-repeat: no-repeat;
+            padding-bottom: 60px; /* Height of footer */
         }
         .main-container {
             flex: 1 0 auto;
@@ -111,9 +106,6 @@ $days_fr = array('Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam');
             max-width: 1200px;
             margin: 0 auto;
             margin-top: 50px; /* Réduit de 80px pour s'adapter au header plus petit */
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         .calendar-wrapper {
             width: 100%;

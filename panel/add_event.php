@@ -1,73 +1,67 @@
 <?php
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
-include ('include/config.php');
+include('include/config.php');
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $title = mysqli_real_escape_string($conn, $_POST['title']);
-    $description = mysqli_real_escape_string($conn, $_POST['description']);
-    $start_date = mysqli_real_escape_string($conn, $_POST['start_date']);
-    $end_date = !empty($_POST['end_date']) ? mysqli_real_escape_string($conn, $_POST['end_date']) : $start_date;
+header('Content-Type: application/json');
 
-    // Format dates properly for MySQL
-    $start_date = date('Y-m-d H:i:s', strtotime($start_date));
-    $end_date = date('Y-m-d H:i:s', strtotime($end_date));
-
-    $query = "INSERT INTO events (title, description, start_date, end_date) 
-              VALUES ('$title', '$description', '$start_date', '$end_date')";
-    
-    if (!mysqli_query($conn, $query)) {
-        die("Error: " . mysqli_error($conn));
+try {
+    // Vérification de la connexion
+    if (!$conn) {
+        throw new Exception("Erreur de connexion à la base de données");
     }
 
-    header('Content-Type: application/json');
-    echo json_encode(['success' => true]);
-    exit();
+    // Vérification des champs requis
+    if (!isset($_POST['title'], $_POST['start_date'])) {
+        throw new Exception('Les champs titre et date de début sont requis');
+    }
+
+    // Préparation des données
+    $title = trim($_POST['title']);
+    $buyin = isset($_POST['buyin']) ? intval($_POST['buyin']) : 0;
+    $date_depart = date('Y-m-d H:i:s', strtotime($_POST['start_date']));
+    $heure_depart = !empty($_POST['heure_depart']) ? 
+                    date('Y-m-d H:i:s', strtotime($_POST['heure_depart'])) : 
+                    $date_depart;
+    $ville = isset($_POST['ville']) ? trim($_POST['ville']) : '';
+
+    // Requête préparée
+    $query = "INSERT INTO activite (`titre-activite`, `buyin`, `date_depart`, `heure_depart`, `ville`) 
+              VALUES (?, ?, ?, ?, ?)";
+              
+    $stmt = mysqli_prepare($conn, $query);
+    if (!$stmt) {
+        throw new Exception("Erreur de préparation de la requête: " . mysqli_error($conn));
+    }
+
+    // Liaison des paramètres et exécution
+    if (!mysqli_stmt_bind_param($stmt, 'sisss', $title, $buyin, $date_depart, $heure_depart, $ville)) {
+        throw new Exception("Erreur de liaison des paramètres: " . mysqli_stmt_error($stmt));
+    }
+
+    if (!mysqli_stmt_execute($stmt)) {
+        throw new Exception("Erreur d'exécution de la requête: " . mysqli_stmt_error($stmt));
+    }
+
+    $id_activite = mysqli_insert_id($conn);
+
+    // Réponse en cas de succès
+    echo json_encode([
+        'success' => true,
+        'id' => $id_activite,
+        'message' => "L'activité a été créée avec succès"
+    ]);
+
+} catch (Exception $e) {
+    // Réponse en cas d'erreur
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'error' => $e->getMessage()
+    ]);
 }
 
-$default_date = isset($_GET['date']) ? $_GET['date'] : date('Y-m-d');
+// Nettoyage
+if (isset($stmt)) mysqli_stmt_close($stmt);
+if (isset($conn)) mysqli_close($conn);
 ?>
-
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ajouter un événement</title>
-    <style>
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; }
-        .form-group input, .form-group textarea { width: 100%; padding: 8px; }
-        button { background: #4CAF50; color: white; border: none; padding: 10px 20px; cursor: pointer; }
-        @media screen and (max-width: 768px) {
-            .form-group input, .form-group textarea { 
-                font-size: 14px;
-                padding: 6px;
-            }
-            button { padding: 8px 16px; }
-        }
-    </style>
-</head>
-<body>
-    <h2>Nouvel événement</h2>
-    <form method="POST">
-        <div class="form-group">
-            <label>Titre :</label>
-            <input type="text" name="title" required>
-        </div>
-        <div class="form-group">
-            <label>Description :</label>
-            <textarea name="description"></textarea>
-        </div>
-        <div class="form-group">
-            <label>Date de début :</label>
-            <input type="datetime-local" name="start_date" value="<?php echo $default_date; ?>T00:00" required>
-        </div>
-        <div class="form-group">
-            <label>Date de fin :</label>
-            <input type="datetime-local" name="end_date">
-        </div>
-        <button type="submit">Enregistrer</button>
-    </form>
-</body>
-</html>
