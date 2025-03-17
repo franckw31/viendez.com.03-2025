@@ -45,8 +45,6 @@ if ($month < 1) {
 $first_day = mktime(0, 0, 0, $month, 1, $year);
 $days_in_month = date('t', $first_day);
 $day_of_week = date('w', $first_day);
-// Convertir pour que lundi soit 0 et dimanche soit 6
-$day_of_week = ($day_of_week + 6) % 7;
 
 // Format month with leading zero if needed
 $month_padded = str_pad($month, 2, '0', STR_PAD_LEFT);
@@ -79,8 +77,7 @@ $months_fr = array(
     9 => 'Septembre', 10 => 'Octobre', 11 => 'Novembre', 12 => 'Décembre'
 );
 
-// Modifier le tableau des jours pour commencer par Lundi
-$days_fr = array('Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim');
+$days_fr = array('Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam');
 ?>
 
 <!DOCTYPE html>
@@ -709,23 +706,10 @@ $days_fr = array('Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim');
                     
                     if (isset($events_by_day[$day])) {
                         foreach ($events_by_day[$day] as $event) {
-                            $formatted_date = date('Y-m-d H:i:s', strtotime($event['date_depart']));
-                            echo "<div class='event' data-event-id='" . $event['id-activite'] . "' 
-                                      data-date='" . $formatted_date . "' 
-                                      onclick='editEvent(" . $event['id-activite'] . ")'>";
-                            echo "<div class='event-title-line'>";
-                            echo "<span class='event-title-text'>" . htmlspecialchars($event['titre-activite']) . "</span>";
-                            if (!empty($event['buyin']) || !empty($event['rake']) || !empty($event['recave'])) {
-                                echo "<span class='event-details'>";
-                                echo "<span class='event-buyin'>";
-                                $amounts = [];
-                                if (!empty($event['buyin'])) $amounts[] = $event['buyin'] . "€";
-                                if (!empty($event['rake'])) $amounts[] = "+" . $event['rake'] . "€";
-                                if (!empty($event['recave'])) $amounts[] = "Recave:" . $event['recave'] . " X";
-                                echo implode(' ', $amounts);
-                                echo "</span></span>";
-                            }
-                            echo "</div></div>";
+                            echo "<div class='event' data-event-id='" . $event['id-activite'] . "' onclick='editEvent(" . $event['id-activite'] . ")'>";
+                            echo "<div class='event-title-line'>" . 
+                                 "<span class='event-title-text'>" . htmlspecialchars($event['titre-activite']) . "</span></div>";
+                            echo "</div>";
                         }
                     }
                     
@@ -769,14 +753,6 @@ $days_fr = array('Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim');
                 <div class="form-group">
                     <label>Buy-in :</label>
                     <input type="number" id="eventBuyin" name="buyin" min="0" step="1" value="0">
-                </div>
-                <div class="form-group">
-                    <label>Rake :</label>
-                    <input type="number" id="eventRake" name="rake" min="0" step="1" value="0">
-                </div>
-                <div class="form-group">
-                    <label>Recave :</label>
-                    <input type="number" id="eventRecave" name="recave" min="0" step="1" value="0">
                 </div>
                 <div class="form-group">
                     <label>Localisation :</label>
@@ -899,12 +875,8 @@ $days_fr = array('Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim');
                             <div class="event-title-line">
                                 <strong>${event.title}</strong>
                                 <div class="event-details">
-                                    ${(event.buyin > 0 || event.rake > 0 || event.recave > 0) ? 
-                                        `<span class="event-buyin">
-                                            ${event.buyin > 0 ? 'Buyin ' + event.buyin + '€' : ''}
-                                            ${event.rake > 0 ? ' ,Rake ' + event.rake + '€,' : ''}
-                                            ${event.recave > 0 ? ' ,Recave ' + event.recave + '' : ''}
-                                        </span>` : 
+                                    ${event.buyin > 0 ? 
+                                        `<span class="event-buyin">${event.buyin}€</span>` : 
                                         ''}
                                     ${event.ville ? 
                                         `<span class="event-location"> - ${event.ville}</span>` : 
@@ -933,13 +905,10 @@ $days_fr = array('Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim');
         document.getElementById('formTitle').textContent = 'Nouvel événement';
         document.getElementById('eventForm').reset();
         document.getElementById('formMode').value = 'add';
-        
-        // Ensure proper datetime format
-        const formattedDate = date.replace(/(\d{4}-\d{2}-\d{2})/, '$1');
-        document.getElementById('eventStart').value = `${formattedDate}T00:00`;
-        document.getElementById('eventEnd').value = `${formattedDate}T00:00`;
-        
+        document.getElementById('eventStart').value = date + 'T00:00';
+        document.getElementById('eventEnd').value = date + 'T00:00';
         document.getElementById('editForm').style.display = 'block';
+        // Cacher le bouton supprimer pour un nouvel événement
         document.querySelector('.delete-btn').style.display = 'none';
     }
 
@@ -973,8 +942,6 @@ $days_fr = array('Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim');
                 document.getElementById('eventId').value = event.id;
                 document.getElementById('eventTitle').value = event.title || '';
                 document.getElementById('eventBuyin').value = event.buyin || '0';
-                document.getElementById('eventRake').value = event.rake || '0';
-                document.getElementById('eventRecave').value = event.recave || '0';
                 document.getElementById('eventLocation').value = event.ville || '';
                 document.getElementById('eventStart').value = event.start_date.substr(0, 16);
                 document.getElementById('eventEnd').value = event.heure_depart ? event.heure_depart.substr(0, 16) : '';

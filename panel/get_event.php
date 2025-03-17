@@ -16,7 +16,7 @@ try {
 
     $id = intval($_GET['id']);
 
-    $query = "SELECT `id-activite`, `titre-activite`, `buyin`, `date_depart`, `heure_depart`, `ville` 
+    $query = "SELECT `id-activite`, `titre-activite`, `buyin`, `rake`, `recave`, `date_depart`, `heure_depart`, `ville` 
               FROM activite 
               WHERE `id-activite` = ?";
 
@@ -48,6 +48,8 @@ try {
         'id' => $event['id-activite'],
         'title' => $event['titre-activite'],
         'buyin' => $event['buyin'],
+        'rake' => $event['rake'],
+        'recave' => $event['recave'],
         'start_date' => $event['date_depart'],
         'heure_depart' => $event['heure_depart'],
         'ville' => $event['ville']

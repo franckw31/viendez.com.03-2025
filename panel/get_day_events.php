@@ -17,7 +17,14 @@ try {
         throw new Exception("Invalid date format");
     }
 
-    $query = "SELECT `id-activite`, `titre-activite`, buyin, date_depart, heure_depart, ville 
+    $query = "SELECT `id-activite` as id, 
+                     `titre-activite` as title,
+                     `buyin`,
+                     `rake`,
+                     `recave`,
+                     `date_depart` as start_date,
+                     `heure_depart`,
+                     `ville`
               FROM activite 
               WHERE DATE(date_depart) = ?
               ORDER BY date_depart ASC";
@@ -41,14 +48,7 @@ try {
 
     $events = [];
     while ($row = mysqli_fetch_assoc($result)) {
-        $events[] = [
-            'id' => $row['id-activite'],
-            'title' => $row['titre-activite'],
-            'buyin' => $row['buyin'],  // Changé de 'description' à 'buyin'
-            'start_date' => $row['date_depart'],
-            'heure_depart' => $row['heure_depart'],
-            'ville' => $row['ville']
-        ];
+        $events[] = $row;
     }
 
     echo json_encode(['success' => true, 'data' => $events]);
