@@ -19,6 +19,7 @@ try {
 
     $query = "SELECT `id-activite` as id, 
                      `titre-activite` as title,
+                     `id-activite` as activity_id,  // Add this line to include activity ID
                      `buyin`,
                      `rake`,
                      `recave`,
