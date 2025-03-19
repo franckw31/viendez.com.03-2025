@@ -100,6 +100,7 @@ $days_fr = array('Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim');
             font-family: 'Google Sans', Roboto, Arial, sans-serif;
             display: flex;
             flex-direction: column;
+            padding-top: 55px; /* Add padding to account for fixed header */
             padding-bottom: 60px;
             background-image: url('/panel/bg.png');
             background-size: cover;
@@ -118,8 +119,7 @@ $days_fr = array('Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim');
             padding: 5px;
             width: calc(100% - 10px);
             max-width: 1200px;
-            margin: 10px auto;
-            margin-top: 0px;
+            margin: 0 auto; /* Remove top margin */
             background: rgba(255, 255, 255, 0.00001);
             border-radius: 12px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
@@ -127,8 +127,8 @@ $days_fr = array('Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim');
         }
         .calendar-wrapper {
             width: 100%;
-            margin:70px 0 10px 0;
-            padding: 15px;
+            margin:70px 0 20px 0;
+            padding: 5px;
             border-radius: 8px;
             background: rgba(255, 255, 255, 0.75);
             box-sizing: border-box;
@@ -136,61 +136,65 @@ $days_fr = array('Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim');
             -webkit-backdrop-filter: blur(10px);
         }
         .header-nav {
-            position: fixed;
+            position: absolute;
             top: 0;
             left: 0;
             right: 0;
-            height: 35px;
-            background: rgba(255, 255, 255, 0.85) !important;
+            height: 45px;
+            background: rgba(255, 255, 255, 0.65) !important;
             z-index: 1000;
-            padding: 5px 26px;
+            padding: 5px 6px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
+            border-bottom: 1px solid rgba(0,0,0,0.1);
         }
 
         .header-nav .today-btn {
-            position: absolute;
-            left: 16px;
-            padding: 2px 20px;
-            font-size: 12px;
+            flex: 0 0 auto;
+            padding: 6px 16px;
+            font-size: 14px;
             border-radius: 4px;
             border: 1px solid #1a73e8;
             color: #1a73e8;
             background: transparent;
             cursor: pointer;
             white-space: nowrap;
-            min-width: 60px;
         }
 
         .header-nav h2 {
-            margin: 0;
+            flex: 1;
             color: #3c4043;
             font-size: 16px;
             font-weight: 500;
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
+            text-align: center;
+            margin: 0;
+            padding: 0 20px;
             white-space: nowrap;
         }
 
         .navigation {
-            position: absolute;
-            right: 16px;
+            flex: 0 0 auto;
             display: flex;
             gap: 10px;
             align-items: center;
         }
 
         .nav-icon {
-            padding: 4px 8px;
-            font-size: 20px;
+            padding: 6px 12px;
+            font-size: 18px;
             color: #1a73e8;
             text-decoration: none;
             cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .nav-icon:hover {
+            background-color: rgba(26,115,232,0.1);
         }
         .calendar {
             width: 100%;
@@ -366,7 +370,7 @@ $days_fr = array('Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim');
             bottom: 0;
             width: 100%;
             height: 50px;
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.6);
             border-top: 1px solid #e0e0e0;
             display: flex;
             align-items: center;
@@ -706,10 +710,10 @@ $days_fr = array('Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim');
             <div class="navigation">
                 <a href="javascript:void(0)" 
                    onclick="changeMonth('<?php echo str_pad($month-1, 2, '0', STR_PAD_LEFT); ?>', '<?php echo $year; ?>')" 
-                   class="nav-icon">&#9664;</a>
+                   class="nav-icon">◀</a>
                 <a href="javascript:void(0)" 
                    onclick="changeMonth('<?php echo str_pad($month+1, 2, '0', STR_PAD_LEFT); ?>', '<?php echo $year; ?>')" 
-                   class="nav-icon">&#9654;</a>
+                   class="nav-icon">▶</a>
             </div>
         </div>
 
@@ -963,7 +967,7 @@ $days_fr = array('Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim');
                                 <div class="event" data-event-id="${event.id}" onclick="editEvent(${event.id})">
                                     <div class="event-title-line">
                                         <strong>${event.title || 'Sans titre'}</strong>
-                                        <span class="event-id">ID: ${event.id}</span>
+                                        <span class="event-id">(${event.id})</span>
                                         ${(event.buyin > 0 || event.rake > 0 || event.recave > 0) ? 
                                             `<div class="event-details">
                                                 <span class="event-buyin">${[
@@ -1042,14 +1046,25 @@ $days_fr = array('Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim');
             .then(event => {
                 if (!event || !event.id) throw new Error('Invalid event data');
                 
-                // Format the date in French
+                // Format the date in French and add ID with link
                 const eventDate = new Date(event.start_date).toLocaleDateString('fr-FR', {
                     day: 'numeric',
-                    month: 'long',
-                    year: 'numeric'
+                    month: 'long'
+              //      year: 'numeric'
                 });
                 
-                document.getElementById('formTitle').textContent = `Evénement du ${eventDate}`;
+                // Create title with linked ID
+                document.getElementById('formTitle').innerHTML = 
+                    `Evénement du ${eventDate} <a href="/panel/voir-activite.php?uid=${event.id}" 
+                    style="color: #1a73e8; text-decoration: none; margin-left: 5px; font-size: 14px;">
+                    <span style="border: 1px solid currentColor; padding: 2px 6px; border-radius: 4px;">
+                    Accés Détails Activité ↗ </span></a>`;
+//                document.getElementById('formTitle').innerHTML = 
+//                    `Evénement du ${eventDate} (ID: ${event.id} <a href="/panel/voir-activite.php?uid=${event.id}" 
+//                    style="color: #1a73e8; text-decoration: none; margin-left: 5px; font-size: 14px;">
+//                    <span style="border: 1px solid currentColor; padding: 2px 6px; border-radius: 4px;">
+//                    Accés Activité ↗ </span></a>)`;
+                
                 document.getElementById('eventId').value = event.id;
                 document.getElementById('eventTitle').value = event.title || '';
                 document.getElementById('eventBuyin').value = event.buyin || '0';
