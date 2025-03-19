@@ -461,14 +461,18 @@ if (isset($_POST['submit4'])) {
                                                                     ?>
                                                                         <table style="color: white;" class="table table-bordered current-user">
                                                                             <tr>
-                                                                                <td rowspan="3" align=center>
-                                                                                    <img src="images/<?php echo $row['photo']; ?>" width="85" height="85" style="align:center">
-                                                                                    <form id="image_upload_form" enctype="multipart/form-data" method="post" class="change-pic">
-                                                                                        <input type="hidden" name="id" value="<?php echo $id; ?>">
-                                                                                        <input type="file" name="fileToUpload" id="fileToUpload" style="display:none;" accept="image/*" onchange="this.form.submit()">
-                                                                                        <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('fileToUpload').click();">
-                                                                                            <i class="fa fa-camera"></i> Changer Photo
-                                                                                        </button>
+                                                                                <td rowspan="3" align=center><img src="images/<?php echo $row['photo']; ?>" width="85" height="85" style="align:center">
+                                                                                    <form id="image_upload_form" enctype="multipart/form-data" action="uploadokvide.php?editid=<?php echo $id; ?>" method="post" class="change-pic">
+                                                                                        <input type="hidden" name="MAX_FILE_SIZE" value="10000000" />
+                                                                                        <div>
+                                                                                            <input type="file" class="fa fa-camera" id="file" name="fileToUpload" style="display:none;" /><input type="button" onClick="fileToUpload.click();" value="Modifier" />
+                                                                                            <i class="fa fa-camera"></i>
+                                                                                        </div>
+                                                                                        <script type="text/javascript">
+                                                                                            document.getElementById("file").onchange = function() {
+                                                                                                document.getElementById("image_upload_form").submit();
+                                                                                            };
+                                                                                        </script>
                                                                                     </form>
                                                                                 </td>
                                                                                 <form method="post">

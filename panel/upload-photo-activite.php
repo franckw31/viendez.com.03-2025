@@ -54,28 +54,55 @@
   </style>
     <body>
       <?php
-      define('DB_SERVER','db5011397709.hosting-data.io');
-      define('DB_USER','dbu5472475');
-      define('DB_PASS' ,'Kookies7*');
-      define('DB_NAME', 'dbs9616600');
-      $con = mysqli_connect(DB_SERVER,DB_USER,DB_PASS,DB_NAME);
-      
-$target_dir = "images/";
-$target_file = $target_dir . basename($_FILES["fileToUpload"]["name"]);
-$aimg=$_FILES["fileToUpload"]["name"];
-$aniid=$_GET['editid'];
+session_start();
+include('include/config.php');
 
-  if (move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $target_file)) 
-    {
-    $query=mysqli_query($con, "UPDATE `activite` SET `photo` = '$aimg' WHERE `activite`.`id-activite` = $aniid");
-    echo $aimg."-ok-".$aniid;
-	  header('Location: http://poker31.org');
+if(isset($_FILES["fileToUpload"])) {
+    $aniid = intval($_GET['editid']); // Get and sanitize the ID
+    $target_dir = "images/";
+    $timestamp = time();
+    $file_extension = strtolower(pathinfo($_FILES["fileToUpload"]["name"], PATHINFO_EXTENSION));
+    $new_filename = "activity_" . $aniid . "_" . $timestamp . "." . $file_extension;
+    $target_file = $target_dir . $new_filename;
+    
+    // Check file type
+    $allowed_types = array('jpg', 'jpeg', 'png', 'gif');
+    if(!in_array($file_extension, $allowed_types)) {
+        $_SESSION['error'] = "Seuls les fichiers JPG, JPEG, PNG & GIF sont autorisés.";
+        header("Location: voir-activite.php?uid=" . $aniid);
+        exit();
     }
-    else
-    {
-      echo "Sorry, there was an error uploading your file.";
-    };
+    
+    // Check file size (5MB max)
+    if ($_FILES["fileToUpload"]["size"] > 5000000) {
+        $_SESSION['error'] = "Le fichier est trop volumineux.";
+        header("Location: voir-activite.php?uid=" . $aniid);
+        exit();
+    }
+    
+    if (move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $target_file)) {
+        // Update database with new filename
+        $stmt = mysqli_prepare($conn, "UPDATE activite SET photo = ? WHERE `id-activite` = ?");
+        mysqli_stmt_bind_param($stmt, 'si', $new_filename, $aniid);
+        
+        if(mysqli_stmt_execute($stmt)) {
+            $_SESSION['msg'] = "Photo mise à jour avec succès.";
+        } else {
+            $_SESSION['error'] = "Erreur lors de la mise à jour de la base de données.";
+        }
+        mysqli_stmt_close($stmt);
+    } else {
+        $_SESSION['error'] = "Erreur lors du téléchargement du fichier.";
+    }
+} else {
+    $_SESSION['error'] = "Aucun fichier sélectionné.";
+}
 
+header("Location: voir-activite.php?uid=" . $aniid);
+mysqli_close($conn);
+exit();
 ?>
-  <script type="text/javascript">window.location.replace("voir-activite.php?uid=<?php echo $aniid; ?>");</script> 
+  <script type="text/javascript">window.location.replace("voir-activite.php?uid=<?php echo $aniid; ?>");</script>
+</body>
+</html>
 

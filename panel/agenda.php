@@ -642,6 +642,48 @@ $days_fr = array('Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim');
             color: #3c4043;
             transition: border-color 0.2s;
         }
+
+        /* Add new inline form group style */
+        .form-group-inline {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+        
+        .form-group-inline .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        /* Add styles for title-location group */
+        .form-group-inline .form-group.title-field {
+            flex: 2;  /* Title takes up more space */
+        }
+        
+        .form-group-inline .form-group.location-field {
+            flex: 1;  /* Location takes up less space */
+        }
+
+        .event-secondary-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: #5f6368;
+            margin-top: 5px;
+        }
+        .event-id {
+            font-size: 12px;
+            color: #666;
+            margin-left: 10px;
+        }
+        
+        .event-info {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
     </style>
 </head>
 <body>
@@ -762,25 +804,29 @@ $days_fr = array('Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim');
             <form id="eventForm" onsubmit="return saveEvent(event)">
                 <input type="hidden" id="eventId" name="id">
                 <input type="hidden" id="formMode" name="mode" value="edit">
-                <div class="form-group">
-                    <label>Titre :</label>
-                    <input type="text" id="eventTitle" name="title" required>
+                <div class="form-group-inline">
+                    <div class="form-group title-field">
+                        <label>Titre :</label>
+                        <input type="text" id="eventTitle" name="title" required>
+                    </div>
+                    <div class="form-group location-field">
+                        <label>Localisation :</label>
+                        <input type="text" id="eventLocation" name="ville">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Buy-in :</label>
-                    <input type="number" id="eventBuyin" name="buyin" min="0" step="1" value="0">
-                </div>
-                <div class="form-group">
-                    <label>Rake :</label>
-                    <input type="number" id="eventRake" name="rake" min="0" step="1" value="0">
-                </div>
-                <div class="form-group">
-                    <label>Recave :</label>
-                    <input type="number" id="eventRecave" name="recave" min="0" step="1" value="0">
-                </div>
-                <div class="form-group">
-                    <label>Localisation :</label>
-                    <input type="text" id="eventLocation" name="ville">
+                <div class="form-group-inline">
+                    <div class="form-group">
+                        <label>Buy-in :</label>
+                        <input type="number" id="eventBuyin" name="buyin" min="0" step="1" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Rake :</label>
+                        <input type="number" id="eventRake" name="rake" min="0" step="1" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Recave :</label>
+                        <input type="number" id="eventRecave" name="recave" min="0" step="1" value="0">
+                    </div>
                 </div>
                 <div class="date-group">
                     <div class="form-group">
@@ -789,7 +835,7 @@ $days_fr = array('Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim');
                     </div>
                     <div class="form-group">
                         <label>Heure de fin :</label>
-                        <input type="datetime-local" id="eventEnd" name="heure_depart">
+                        <input type="datetime-local" id="eventEnd" name="end_date">
                     </div>
                 </div>
                 <div class="button-group">
@@ -866,9 +912,12 @@ $days_fr = array('Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim');
     }
     
     function showDayEvents(date) {
-        if (!date) return;
+        if (!date) {
+            console.error('No date provided');
+            return;
+        }
         
-        selectedDate = date; // Store the current date
+        selectedDate = date;
         const selectedDateElement = document.getElementById('selectedDate');
         const eventsList = document.getElementById('dayEventsList');
         const dayEvents = document.querySelector('.day-events');
@@ -876,55 +925,86 @@ $days_fr = array('Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim');
         document.getElementById('editForm').style.display = 'none';
         dayEvents.style.display = 'block';
         
-        const displayDate = new Date(date).toLocaleDateString('fr-FR', {
-            day: 'numeric',
-            month: 'long'
-        }); // Removed year from format
-        
-        selectedDateElement.textContent = displayDate;
-        eventsList.innerHTML = '<p>Chargement...</p>';
-        
-        fetch('get_day_events.php?date=' + date)
-            .then(response => {
-                if (!response.ok) throw new Error('Network response was not ok');
-                return response.json();
-            })
-            .then(response => {
-                if (!response.success) throw new Error(response.error || 'Failed to load events');
-                const events = response.data;
-                
-                eventsList.innerHTML = events.length ? 
-                    events.map(event => `
-                        <div class="event" data-event-id="${event.id}" onclick="editEvent(${event.id})">
-                            <div class="event-title-line">
-                                <strong>${event.title}</strong>
-                                <div class="event-details">
-                                    ${(event.buyin > 0 || event.rake > 0 || event.recave > 0) ? 
-                                        `<span class="event-buyin">
-                                            ${event.buyin > 0 ? 'Buyin ' + event.buyin + '€' : ''}
-                                            ${event.rake > 0 ? ' ,Rake ' + event.rake + '€,' : ''}
-                                            ${event.recave > 0 ? ' ,Recave ' + event.recave + '' : ''}
-                                        </span>` : 
-                                        ''}
-                                    ${event.ville ? 
-                                        `<span class="event-location"> - ${event.ville}</span>` : 
-                                        ''}
-                                    <span class="event-time">
-                                        ${new Date(event.start_date).toLocaleTimeString('fr-FR', {
-                                            hour: '2-digit',
-                                            minute: '2-digit'
-                                        })}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    `).join('') :
-                    '<p>Aucun événement ce jour</p>';
-            })
-            .catch(error => {
-                console.error('Erreur:', error);
-                eventsList.innerHTML = '<p>Aucun événement trouvé pour cette date</p>';
+        try {
+            const displayDate = new Date(date).toLocaleDateString('fr-FR', {
+                day: 'numeric',
+                month: 'long'
             });
+            
+            selectedDateElement.textContent = displayDate;
+            eventsList.innerHTML = '<p>Chargement...</p>';
+            
+            fetch('get_day_events.php?date=' + encodeURIComponent(date))
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(response => {
+                    if (!response.success) {
+                        throw new Error(response.error || 'Échec du chargement des événements');
+                    }
+                    
+                    const events = response.data || [];
+                    
+                    if (!Array.isArray(events)) {
+                        throw new Error('Format de données invalide');
+                    }
+                    
+                    eventsList.innerHTML = events.length ? 
+                        events.map(event => {
+                            if (!event || !event.id) {
+                                console.warn('Invalid event data:', event);
+                                return '';
+                            }
+                            
+                            return `
+                                <div class="event" data-event-id="${event.id}" onclick="editEvent(${event.id})">
+                                    <div class="event-title-line">
+                                        <strong>${event.title || 'Sans titre'}</strong>
+                                        <span class="event-id">ID: ${event.id}</span>
+                                        ${(event.buyin > 0 || event.rake > 0 || event.recave > 0) ? 
+                                            `<div class="event-details">
+                                                <span class="event-buyin">${[
+                                                    event.buyin > 0 ? event.buyin + '€' : '',
+                                                    event.rake > 0 ? '+' + event.rake + '€' : '',
+                                                    event.recave > 0 ? event.recave + ' Recaves' : ''
+                                                ].filter(Boolean).join(' ')}</span>
+                                            </div>` : 
+                                        ''}
+                                    </div>
+                                    <div class="event-secondary-line">
+                                        <div class="event-info">
+                                            ${event.ville ? 
+                                                `<span class="event-location">${event.ville}</span>` : 
+                                            ''}
+                                            <span class="event-time">
+                                                ${new Date(event.start_date).toLocaleTimeString('fr-FR', {
+                                                    hour: '2-digit',
+                                                    minute: '2-digit'
+                                                })}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('') :
+                        '<p>Aucun événement ce jour</p>';
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    eventsList.innerHTML = `
+                        <div class="error-message" style="color: #721c24; background-color: #f8d7da; padding: 15px; border-radius: 4px; margin-top: 10px;">
+                            <strong>Erreur de chargement:</strong> Impossible de récupérer les événements pour cette date.
+                            <br>
+                            <small>Veuillez réessayer plus tard ou contacter l'administrateur.</small>
+                        </div>`;
+                });
+        } catch (error) {
+            console.error('Erreur:', error);
+            eventsList.innerHTML = '<p>Une erreur est survenue lors du chargement des événements</p>';
+        }
     }
 
     function addEvent(date) {
@@ -977,7 +1057,7 @@ $days_fr = array('Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim');
                 document.getElementById('eventRecave').value = event.recave || '0';
                 document.getElementById('eventLocation').value = event.ville || '';
                 document.getElementById('eventStart').value = event.start_date.substr(0, 16);
-                document.getElementById('eventEnd').value = event.heure_depart ? event.heure_depart.substr(0, 16) : '';
+                document.getElementById('eventEnd').value = event.end_date ? event.end_date.substr(0, 16) : '';
                 document.getElementById('formMode').value = 'edit';
                 document.querySelector('.delete-btn').style.display = 'block';
             })

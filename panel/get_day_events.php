@@ -19,12 +19,12 @@ try {
 
     $query = "SELECT `id-activite` as id, 
                      `titre-activite` as title,
-                     `id-activite` as activity_id,  // Add this line to include activity ID
+                     `id-activite` as activity_id,
                      `buyin`,
                      `rake`,
                      `recave`,
                      `date_depart` as start_date,
-                     `heure_depart`,
+                     `end_date`,
                      `ville`
               FROM activite 
               WHERE DATE(date_depart) = ?
