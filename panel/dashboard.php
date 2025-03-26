@@ -183,7 +183,7 @@ if (strlen($_SESSION['id'] == 0)) {
 								
 								
 
-								<div class="col-sm-4"><a href="gestion-challenges.php">
+								<div class="col-sm-4"><a href="liste-membres-challenge.php">
 									<div class="ppanel panel-white-chal no-radius text-center">
 										<div class="panel-body">
 											<span class="fa-stack fa-4x"> 
@@ -191,7 +191,7 @@ if (strlen($_SESSION['id'] == 0)) {
 												<i class="faa faa-users faa-stack-1x faa-inverse"></i> </span>
 											<!-- <h2 class="StepTitle">Prochaines Activités</h2> -->
 											<p class="cl-effect-1">
-												<a href="gestion-challenges.php">
+												<a href="liste-membres-challenge.php">
 													<?php $result1 = mysqli_query($con, "SELECT * FROM activite ");
 													$num_rows1 = mysqli_num_rows($result1); {
 														?>
@@ -247,7 +247,7 @@ if (strlen($_SESSION['id'] == 0)) {
 										</div>
 									</div>
 								</div>
-								<div class="col-sm-4"><a href="gestion-challenges.php">
+								<div class="col-sm-4"><a href="liste-membres-challenge.php">
 									<div class="panel panel-white no-radius text-center">
 										<!-- <div class="panel-body"> -->
 											<span class="ffa-stack fa-2x"> 

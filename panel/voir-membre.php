@@ -156,55 +156,96 @@ if (isset($_POST['submito'])) {
 
 
 if (isset($_POST['submitdup'])) {
-    $sql = mysqli_prepare($con, "SELECT * FROM `activite` WHERE `id-membre` = ?");
-    mysqli_stmt_bind_param($sql, 'i', $id);
-    mysqli_stmt_execute($sql);
-    $result = mysqli_stmt_get_result($sql);
-    $row3 = mysqli_fetch_array($result);
+    try {
+        mysqli_begin_transaction($con);
+        
+        // Debug log
+        error_log("Starting duplication for member ID: " . $id);
+        
+        // Get member default values
+        $stmt = mysqli_prepare($con, "SELECT * FROM `membres` WHERE `id-membre` = ?");
+        mysqli_stmt_bind_param($stmt, 'i', $id);
+        mysqli_stmt_execute($stmt);
+        $member = mysqli_stmt_get_result($stmt)->fetch_array();
+        echo $member['ville'].$id;
+        if (!$member) {
+            throw new Exception("Member not found");
+        }
 
-    $activi = $row3["id-activite"];
-    $id_structure = $row3["id-structure"];
-    $id_membre = $row3["id-membre"];
-    $titre_activite = $row3["titre-activite"];
-    $date_depart = $row3["date_depart"];
-    $heure_depart = $row3["heure_depart"];
-    $ville = $row3["ville"];
-    $rue = $row3["rue"];
-    $lng = $row3["lng"];
-    $lat = $row3["lat"];
-    $icon = $row3["icon"];
-    $ico_size = $row3["ico-size"];
-    $photo = $row3["photo"];
-    $lien = $row3["lien"];
-    $lien_id = $row3["lien-id"];
-    $lien_texte = $row3["lien-texte"];
-    $lien_texte_fin = $row3["lien-texte-fin"];
-    $places = $row3["places"];
-    $reserves = $row3["reserves"];
-    $options = $row3["options"];
-    $libre = $row3["libre"];
-    $commentaire = $row3["commentaire"];
-    $buyin = $row3["buyin"];
-    $rake = $row3["rake"];
-    $bounty = $row3["bounty"];
-    $jetons = $row3["jetons"];
-    $recave = $row3["recave"];
-    $addon = $row3["addon"];
-    $ante = $row3["ante"];
-    $bonus = $row3["bonus"];
-    $nb_tables = $row3["nb-tables"];
+        // Create new activity using member defaults
+        $stmt = mysqli_prepare($con, "INSERT INTO `activite` (
+            `id-membre`, `titre-activite`, `heure_depart`, `ville`, 
+            `places`, `nb-tables`, `buyin`, `rake`, `bounty`, 
+            `jetons`, `recave`, `addon`, `ante`, `bonus`, 
+            `lng`, `lat`, `commentaire`
+        ) VALUES (?, ?, NOW(), ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-    $modif = mysqli_query($con, "INSERT INTO `activite` ( `id-membre` , `id-structure` ,`titre-activite`, `heure_depart` ,`rue` ,`ville` , `lng` ,`lat` , `places` , `nb-tables`  , `commentaire` , `buyin` , `rake`, `bounty`  , `jetons`  , `recave`  , `addon` , `ante`  , `bonus`, `photo`, `lien-id`, `lien`, `lien-texte-fin`, `icon` ) VALUES ( '$id' , '$id_structure' , '$titre_activite' , '$heure_depart', '$rue' ,'$ville' ,'$lng' ,'$lat' , '$places' , '$nb_tables' , '$commentaire' ,  '$buyin' ,  '$rake' , '$bounty' , '$jetons' ,  '$recave' , '$addon' , '$ante' , '$bonus', '$photo', '$lien_id', '$lien', '$lien_texte_fin', '$icon')");
+        if (!$stmt) {
+            throw new Exception("Prepare failed: " . mysqli_error($con));
+        }
 
-    $sql3 = mysqli_query($con, "SELECT * FROM `activite` WHERE `id-membre` =  '$id' ORDER BY `id-activite` DESC");
-    $row3 = mysqli_fetch_array($sql3); 
-    $activi = $row3["id-activite"];
-    $membre = $row3["id-membre"];
-    
-    $sql4 = mysqli_query($con, "INSERT INTO `participation` (`id-membre`, `id-membre-vainqueur`, `id-activite`, `id-siege`, `id-table`, `id-challenge`, `option`, `ordre`, `valide`, `commentaire`, `classement`, `points`, `gain`, `ds`, `ip-ins`, `ip-mod`, `ip-sup`) VALUES ( '$membre', '', '$activi', '1', '1', '', 'Inscrit', '1', 'Actif', NULL, '0', '0', '0', CURRENT_TIMESTAMP, '', '', '')");
+        // Add debug values
+        $titre = $member['def_nomact'] . ' (copie)';
+        $places = intval($member['def_nbj']);
+        echo "ok2";
+        mysqli_stmt_bind_param($stmt, 'issiiiiiiiiidds',
+            $id,
+            $titre,
+            $member['ville'],
+            $places,
+            $member['def_buy'],
+            $member['def_rak'], 
+            $member['def_bou'],
+            $member['def_jet'],
+            $member['def_rec'],
+            $member['def_add'],
+            $member['def_ant'],
+            $member['def_bon'],
+            $member['longitude'],
+            $member['latitude'],
+            $member['def_com']
+        );
+        echo "ok3";
+        if (!mysqli_stmt_execute($stmt)) {
+            throw new Exception("Activity creation failed: " . mysqli_stmt_error($stmt));
+        }
 
-    $sql5 = mysqli_query($con, "INSERT INTO `blindes-live` (`id-activite`, `ordre`, `nom`, `duree`, `fin`, `ante`) VALUES ('$activi', '1', 'Pause', '5', '2024-12-31 23:33:00', '0' )");
+        $new_activity_id = mysqli_insert_id($con);
 
+        // Create participation record
+        $stmt = mysqli_prepare($con, "INSERT INTO `participation` 
+            (`id-membre`, `id-activite`, `id-siege`, `id-table`, `option`, `ordre`, `valide`) 
+            VALUES (?, ?, 1, 1, 'Inscrit', 1, 'Actif')");
+
+        mysqli_stmt_bind_param($stmt, 'ii', $id, $new_activity_id);
+        
+        if (!mysqli_stmt_execute($stmt)) {
+            throw new Exception("Failed to create participation: " . mysqli_stmt_error($stmt));
+        }
+
+        // Create initial blinds structure
+        $stmt = mysqli_prepare($con, "INSERT INTO `blindes-live` 
+            (`id-activite`, `ordre`, `nom`, `duree`, `fin`, `ante`) 
+            VALUES (?, 1, 'Pause', 5, DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 1 YEAR), 0)");
+
+        mysqli_stmt_bind_param($stmt, 'i', $new_activity_id);
+        
+        if (!mysqli_stmt_execute($stmt)) {
+            throw new Exception("Failed to create blinds: " . mysqli_stmt_error($stmt));
+        }
+
+        mysqli_commit($con);
+        $_SESSION['msg'] = "Nouvelle activité créée avec succès";
+        
+    } catch (Exception $e) {
+        mysqli_rollback($con);
+        error_log("Error creating activity: " . $e->getMessage());
+        $_SESSION['error'] = "Erreur: " . $e->getMessage();
+    } finally {
+        if (isset($stmt)) {
+            mysqli_stmt_close($stmt);
+        }
+    }
 }
 
 if (isset($_POST['submit2'])) {
@@ -430,6 +471,7 @@ if (isset($_POST['submit4'])) {
                                 <div id="bMenu">
                                     <a href="#" id="css" class="btnnav" onmouseover="afficher('css')">Joueur</a>
                                     <a href="#" id="css2" class="btnnav" onmouseover="afficher('css2')">Orga.</a>
+                                    <a href="#" id="css3" class="btnnav" onmouseover="afficher('css3')">Notifs</a>
                                     <a href="#" id="js" class="btnnav" onmouseover="afficher('js')">Compét.</a>
                                     <a href="#" id="php" class="btnnav" onmouseover="afficher('php')">Loisirs</a>
                                     <a href="#" id="col" class="btnnav" onmouseover="afficher('col')">Collect.</a>
@@ -488,7 +530,7 @@ if (isset($_POST['submit4'])) {
                                                                                     <button type="submit" class="btn btn-primary btn-block" name="submit">Modifier</button>
                                                                                 </td>
                                                                                 <td style="text-align:center ;">
-                                                                                    <button type="submit" class="btn btn-primary btn-block" name="submitdup">Dupliquer Activité</button>
+                                                                                    <button type="submit" class="btn btn-primary btn-block" name="submitdup">Création Activité</button>
                                                                                 </td>
                                                                             </tr>
                                                                             <tr>
@@ -555,7 +597,7 @@ if (isset($_POST['submit4'])) {
                                                                                 </td>
                                                                                 <!-- <td colspan="2">
                                                                                     <a href="liste-membres.php">Quitter </a>
-                                                                                </td> --> 
+                                                                                </td> -->
                                                                             </tr>
                                                                             </form>
                                                                         </table>
@@ -566,7 +608,7 @@ if (isset($_POST['submit4'])) {
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>  
+                                        </div>    
                                     </div>    
                                     <div id="css2E">                                        
                                         <div class="wrap-content container" id="container9">
@@ -670,6 +712,15 @@ if (isset($_POST['submit4'])) {
                                                                                 </td>
                                                                             </tr>
                                                                             <tr>
+                                                                                <th style="color: #ffffff !important;">Longitude</th>
+                                                                                <td><input class="form-control" id="longitude" name="longitude" type="text" value="<?php echo $row['longitude']; ?>">
+                                                                                </td>
+                                                                                <th style="color: #ffffff !important;">Latitude</th>
+                                                                                <td><input class="form-control" id="latitude" name="latitude" type="text" value="<?php echo $row['latitude']; ?>">
+                                                                                </td>
+                                                                            </tr>
+                                                                            
+                                                                            <tr>
                                                                                 <th style="color: #ffffff !important;">Commentaire</th>
                                                                                 <td colspan="3"><input class="form-control" id="def_com" name="def_com" type="text" value="<?php echo $row['def_com']; ?>"></td>
                                                                             </tr>
@@ -682,7 +733,7 @@ if (isset($_POST['submit4'])) {
                                                                                 </td>
                                                                                 <!--<td colspan="2">
                                                                                     <a href="liste-membres.php">Quitter </a>
-                                                                                </td> --> 
+                                                                                </td> -->
                                                                             </tr>
                                                                             </form>
                                                                         </table>
@@ -693,9 +744,145 @@ if (isset($_POST['submit4'])) {
                                                     </div>
                                                 </div>
                                             </div>
-                                       </div>
-                                   </div>
-                                   <div id="jsE">
+                                        </div>
+                                    </div>
+                                    <div id="css3E">                                        
+                                        <div class="wrap-content container" id="container10">
+                                            <div class="container-fluid container-fullw bg-white">
+                                                <div class="col-md-12">
+                                                    <div class="row margin-top-30">
+                                                        <div class="panel-wwhite">
+                                                            <div class="panel-body">
+                                                                <?php echo htmlentities($_SESSION['msg'] = ""); ?>
+                                                                <div class="form-group">
+                                                                    <?php
+                                                                    $id = intval($_GET['id']);
+                                                                    $sql = mysqli_query($con, "SELECT * FROM `membres` WHERE `id-membre` =  '$id'");
+                                                                    while ($row = mysqli_fetch_array($sql)) {
+                                                                    ?>
+                                                                        <table style="color: white;" class="table table-bordered current-user">
+                                                                            <tr>
+                                                                                <td rowspan="3" align=center><img src="images/<?php echo $row['photo']; ?>" width="85" height="85" style="align:center">
+                                                                                    <form id="image_upload_form" enctype="multipart/form-data" action="uploadokvide.php?editid=<?php echo $id; ?>" method="post" class="change-pic">
+                                                                                        <input type="hidden" name="MAX_FILE_SIZE" value="10000000" />
+                                                                                        <div>
+                                                                                            <input type="file" class="fa fa-camera" id="file" name="fileToUpload" style="display:none;" /><input type="button" onClick="fileToUpload.click();" value="Modifier" />
+                                                                                            <i class="fa fa-camera"></i>
+                                                                                        </div>
+                                                                                        <script type="text/javascript">
+                                                                                            document.getElementById("file").onchange = function() {
+                                                                                                document.getElementById("image_upload_form").submit();
+                                                                                            };
+                                                                                        </script>
+                                                                                    </form>
+                                                                                </td>
+                                                                                <form method="post">
+                                                                                    <th style="color:rgb(64, 30, 235) !important;">Activité :</th>
+                                                                                    <td colspan="3"><input class="form-control" id="def_nomact" name="def_nomact" type="text" style="text-align:center; font-size:22px; bold" value="<?php echo $row['def_nomact']; ?>"></td>
+
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td style="text-align:center ; display:none">
+                                                                                    <button type="submit" name="submito" id="submito" class="btn btn-oo btn-primary">
+                                                                                        Mise à jour</button>
+                                                                                </td>
+                                                                                <td style="text-align:center ;">
+                                                                                    <button type="submit" class="btn btn-primary-green btn-block" name="submito">OK </button>
+                                                                                </td>
+                                                                                <td style="text-align:center ;">
+                                                                                    <button type="submit" class="btn btn-primary btn-block" name="submito">Modifier</button>
+                                                                                </td>
+                                                                                <td style="text-align:center ;">
+                                                                                    <button type="submit" class="btn btn-primary btn-block" name="submitdup">Création Activité</button>
+                                                                                </td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td colspan="4"></td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <th style="color: #ffffff !important;">Structure</th>
+                                                                                <td><input class="form-control" id="def_str" name="def_str" type="text" value="<?php echo $row['def_str']; ?>">
+                                                                                </td>
+                                                                                <th style="color: #ffffff !important;">Nb Joueurs</th>
+                                                                                <td><input class="form-control" id="def_nbj" name="def_nbj" type="text" value="<?php echo $row['def_nbj']; ?>">
+                                                                                </td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <th style="color: #ffffff !important;">Buyin</th>
+                                                                                <td><input class="form-control" id="def_buy" name="def_buy" type="text" value="<?php echo $row['def_buy']; ?>">
+                                                                                </td>
+                                                                                <th style="color: #ffffff !important;">Rake</th>
+                                                                                <td><input class="form-control" id="def_rak" name="def_rak" type="text" value="<?php echo $row['def_rak']; ?>">
+                                                                                </td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <th style="color: #ffffff !important;">Bounty</th>
+                                                                                <td><input class="form-control" id="def_bou" name="def_bou" type="text" value="<?php echo $row['def_bou']; ?>">
+                                                                                </td>
+                                                                                <th style="color: #ffffff !important;">Recaves</th>
+                                                                                <td><input class="form-control" id="def_rec" name="def_rec" type="text" value="<?php echo $row['def_rec']; ?>">
+                                                                                </td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <th style="color: #ffffff !important;">Nb Jetons</th>
+                                                                                <td><input class="form-control" id="def_jet" name="def_jet" type="text" value="<?php echo $row['def_jet']; ?>">
+                                                                                </td>
+                                                                                <th style="color: #ffffff !important;">Bonus</th>
+                                                                                <td><input class="form-control" id="def_bon" name="def_bon" type="text" value="<?php echo $row['def_bon']; ?>">
+                                                                                </td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <th style="color: #ffffff !important;">Addon</th>
+                                                                                <td><input class="form-control" id="def_add" name="def_add" type="text" value="<?php echo $row['def_add']; ?>">
+                                                                                </td>
+                                                                                <th style="color: #ffffff !important;">Ante</th>
+                                                                                <td><input class="form-control" id="def_ant" name="def_ant" type="text" value="<?php echo $row['def_ant']; ?>">
+                                                                                </td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <th style="color: #ffffff !important;">Rendez-vous</th>
+                                                                                <td><input class="form-control" id="def_rdv" name="def_rdv" type="text" value="<?php echo $row['def_rdv']; ?>">
+                                                                                </td>
+                                                                                <th style="color: #ffffff !important;">Debut</th>
+                                                                                <td><input class="form-control" id="def_sta" name="def_sta" type="text" value="<?php echo $row['def_sta']; ?>">
+                                                                                </td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <th style="color: #ffffff !important;">Longitude</th>
+                                                                                <td><input class="form-control" id="longitude" name="longitude" type="text" value="<?php echo $row['longitude']; ?>">
+                                                                                </td>
+                                                                                <th style="color: #ffffff !important;">Latitude</th>
+                                                                                <td><input class="form-control" id="latitude" name="latitude" type="text" value="<?php echo $row['latitude']; ?>">
+                                                                                </td>
+                                                                            </tr>
+                                                                            <tr></tr>
+                                                                            <tr>
+                                                                                <th style="color: #ffffff !important;">Commentaire</th>
+                                                                                <td colspan="3"><input class="form-control" id="def_com" name="def_com" type="text" value="<?php echo $row['def_com']; ?>"></td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td colspan="4"></td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td style="display:none;" style="text-align:center ;">
+                                                                                    <button type="submit" class="btn btn-primary btn-block" name="submito">Mise à jour</button>
+                                                                                </td>
+                                                                                <!--<td colspan="2">
+                                                                                    <a href="liste-membres.php">Quitter </a>
+                                                                                </td> -->
+                                                                            </tr>
+                                                                            </form>
+                                                                        </table>
+                                                                    <?php } ?>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div id="jsE">
                                         <div class="row">
                                             <div class="col-md-12">
                                                 <!-- <h5 class="over-title margin-bottom-15">-> <span class="text-bold">Gestion des Competences</span></h5> -->
@@ -877,7 +1064,7 @@ if (isset($_POST['submit4'])) {
                                                                                                                     </td>
                                                                                                                 <?php } ?>
                                                                                                                 <td>
-                                                                                                                    <!--" class="btn btn-transparent btn-xs" tooltip-placement="top" tooltip="Edit"><i class="fa fa-pencil"></i></a>
+                                                                                                                    <!--<a href="edit-competences.php?id=<?php echo $row['id']; ?>" class="btn btn-transparent btn-xs" tooltip-placement="top" tooltip="Edit"><i class="fa fa-pencil"></i></a>
                                                                                                                                                     <i class="fas fa-edit"></i></a> -->
                                                                                                                     <a href="ajout-loisirs.php?id=<?php echo $row['id'] ?>&del=deleteind" onClick="return confirm('Are you sure you want to delete?')" class="btn btn-transparent btn-xs tooltips" tooltip-placement="top" tooltip="Remove"><i class="fa fa-times fa fa-white"></i></a>
                                                                                                                 </td>
@@ -993,7 +1180,7 @@ if (isset($_POST['submit4'])) {
                                                                                                                     </td>
                                                                                                                 <?php } ?>
                                                                                                                 <td>
-                                                                                                                    <!--" class="btn btn-transparent btn-xs" tooltip-placement="top" tooltip="Edit"><i class="fa fa-pencil"></i></a>
+                                                                                                                    <!--<a href="edit-competences.php?id=<?php echo $row['id']; ?>" class="btn btn-transparent btn-xs" tooltip-placement="top" tooltip="Edit"><i class="fa fa-pencil"></i></a>
                                                                                                                                                     <i class="fas fa-edit"></i></a> -->
                                                                                                                     <a href="ajout-collection.php?id=<?php echo $row['id_collection'] ?>&del=deleteind" onClick="return confirm('Are you sure you want to delete?')" class="btn btn-transparent btn-xs tooltips" tooltip-placement="top" tooltip="Remove"><i class="fa fa-times fa fa-white"></i></a>
                                                                                                                 </td>
@@ -1111,16 +1298,7 @@ if (isset($_POST['submit4'])) {
                                                                                                                     </td>
                                                                                                                 <?php } ?>
                                                                                                                 <td>
-                                                                                                                    <a href="voir-activite.php?uid=<?php echo $row['id-activite']; ?>" class="btn btn-transparent btn-xs" tooltip-placement="top" tooltip="Edit"><i class="fa fa-pencil"></i></a>
-                                                                                                                    <!-- <i class="fas fa-edit"></i></a>  -->
-                                                                                                                    <!-- <a href="ajout-competences.php?id=<?php echo $row['id'] ?>&del=deleteind"
-                                                                                                            onClick="return confirm('Are you sure you want to delete?')"
-                                                                                                            class="btn btn-transparent btn-xs tooltips"
-                                                                                                            tooltip-placement="top"
-                                                                                                            tooltip="Remove"><i
-                                                                                                            class="fa fa-times fa fa-white"></i></a> -->
-                                                                                                                </td>
-                                                                                                                <td>
+                                                                                                                    <!-- <a href="ajout-competences.php?id=<?php echo $row['id'] ?>&del=deleteind" onClick="return confirm('Are you sure you want to delete?')" class="btn btn-transparent btn-xs" tooltip-placement="top" tooltip="Remove"><i class="fa fa-times fa fa-white"></i></a> -->
                                                                                                                     <a href="voir-activite.php?uid=<?php echo $row['id-activite']; ?>" class="btn btn-transparent btn-xs" tooltip-placement="top" tooltip="Edit"><i class="fa fa-pencil"></i></a>
                                                                                                                 </td>
                                                                                                                 </tr>
@@ -1134,6 +1312,32 @@ if (isset($_POST['submit4'])) {
                                                                                 </main>
                                                                             </div>
                                                                         </div>
+                                                                        <form role="form" name="adddoc" method="post" onSubmit="return valid();">
+                                                                            <div class="form-group">
+                                                                                <label for="col">
+                                                                                    Ajout
+                                                                                    Collection
+                                                                                </label>
+                                                                                <select name="col" class="form-control" required="true">
+                                                                                    <!--		<option value="compet">Select Competence</option> -->
+                                                                                    <option value="col">
+                                                                                        Choix
+                                                                                        de la Collection
+                                                                                    </option>
+                                                                                    <?php $ret2 = mysqli_query($con, "select * from collections");
+                                                                                    while ($row2 = mysqli_fetch_array($ret2)) {
+                                                                                    ?>
+                                                                                        <option value="<?php echo htmlentities($row2['id_collection']); ?>">
+                                                                                            <?php echo htmlentities($row2['nom']); ?>
+                                                                                        </option>
+                                                                                        $indiv=
+                                                                                    <?php } ?>
+                                                                                </select>
+                                                                            </div>
+                                                                            <button type="submit" name="submit4" id="submit4" class="btn btn-o btn-primary">
+                                                                                Ajout Coll.
+                                                                            </button>
+                                                                        </form>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -1143,22 +1347,23 @@ if (isset($_POST['submit4'])) {
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- end: BASIC EXAMPLE -->
-                        <!-- end: SELECT BOXES -->
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- start: FOOTER -->
-        <?php include('include/footer.php'); ?>
-        <!-- end: FOOTER -->
-        <!-- start: SETTINGS -->
-        <?php include('include/setting.php'); ?>
-        <!-- end: SETTINGS -->
-    </div>
+                                </div> <!-- end bSection -->
+                            </div> <!-- end auCentre -->
+                        </div> <!-- end contenu -->
+                    </div> <!-- end conteneur -->
+                </div> <!-- end wrap-content container -->
+            </div> <!-- end main-content -->
+        </div> <!-- end app-content -->
+    </div> <!-- end app -->
+
+    <!-- start: FOOTER -->
+    <?php include('include/footer.php'); ?>
+    <!-- end: FOOTER -->
+    
+    <!-- start: SETTINGS -->
+    <?php include('include/setting.php'); ?>
+    <!-- end: SETTINGS -->
+
     <!-- start: MAIN JAVASCRIPTS -->
     <script src="vendor/jquery/jquery.min.js"></script>
     <script src="vendor/bootstrap/js/bootstrap.min.js"></script>
@@ -1195,6 +1400,8 @@ if (isset($_POST['submit4'])) {
     </script>
     <script src="../js/scripts.js"></script>
 
+
+
     <script type="text/javascript" language="javascript">
         function afficher(id) {
             var leCalque = document.getElementById(id);
@@ -1203,6 +1410,7 @@ if (isset($_POST['submit4'])) {
             // Reset all sections
             document.getElementById("cssE").className = "rubrique bgImg";
             document.getElementById("css2E").className = "rubrique bgImg";
+            document.getElementById("css3E").className = "rubrique bgImg"; // Add this line
             document.getElementById("jsE").className = "rubrique bgImg";
             document.getElementById("ksE").className = "rubrique bgImg";
             document.getElementById("phpE").className = "rubrique bgImg";
@@ -1211,6 +1419,7 @@ if (isset($_POST['submit4'])) {
             // Reset all nav buttons
             document.getElementById("css").className = "btnnav";
             document.getElementById("css2").className = "btnnav";
+            document.getElementById("css3").className = "btnnav"; // Add this line
             document.getElementById("js").className = "btnnav";
             document.getElementById("ks").className = "btnnav";
             document.getElementById("php").className = "btnnav";
@@ -1222,7 +1431,7 @@ if (isset($_POST['submit4'])) {
         }
     </script>
     <script type="text/javascript" language="javascript">
-        afficher('ks');
+        afficher('css');
     </script>
 
 </body>
