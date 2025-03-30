@@ -1372,7 +1372,7 @@
     <footer class="footer">
         <div class="footer-content">
             <div class="footer-links">
-                <a href="/indexnav.html">Accueil</a>
+                <a href="/index.html">Accueil</a>
                 <a href="dashboard.php">Menus</a>
                 <!-- <a href="#">Mentions légales</a> -->
             </div>

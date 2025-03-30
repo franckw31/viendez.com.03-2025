@@ -24,7 +24,7 @@ echo $count;
 if ($count == 1) {
     echo "ok";
     $_SESSION['user'] = $username;
-    header("Location: indexnav.html");
+    header("Location: index.html");
 }
 ;
 ?>

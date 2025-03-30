@@ -252,8 +252,8 @@
             container: 'map',
             // style: 'mapbox://styles/mapbox/streets-v12',
             style: 'mapbox://styles/franckw31/clnd1m23b03o501qu3x5ab4xk',
-            center: [1.36, 43.55],
-            zoom: 9.5,
+            center: [1.43, 43.65],
+            zoom: 9.6,
             attributionControl: false
         });
         // create the popup			
@@ -347,7 +347,7 @@
                 }
             });
             document.getElementById('fit').addEventListener('click', () => {
-                map.flyTo({ center: [1.36, 43.55], zoom: 9.4 });
+                map.flyTo({ center: [1.43, 43.65],zoom: 9.6 });
                 const popup = document.getElementsByClassName('mapboxgl-popup');
                 if (popup.length) {
                     popup[0].remove();

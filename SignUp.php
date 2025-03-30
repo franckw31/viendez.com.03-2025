@@ -2,16 +2,14 @@
 session_start();
 echo "coucou";
 if (isset($_SESSION['Email_Session'])) {
-    header("Location: /indexnav.html");
+    header("Location: /index.html");
     die();
 }
 include('/panel/include/config.php');
 //Import PHPMailer classes into the global namespace
 //These must be at the top of your script, not inside a function
-use panel/PHPMailer/PHPMailer/PHPMailer;
-use panel/PHPMailer/PHPMailer/SMTP;
-use panel/PHPMailer/PHPMailer/Exception;
-
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 //Load Composer's autoloader
 require 'panel/vendor/autoload.php';
 echo "coucou";

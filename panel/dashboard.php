@@ -225,7 +225,7 @@ if (strlen($_SESSION['id'] == 0)) {
 									</div>
 								</div>
 
-								<div class="col-sm-4"><a href="/indexnav.html">
+								<div class="col-sm-4"><a href="/index.html">
 									<div class="panel panel-white-france no-radius text-center">
 									<div class="panel-body">
 											<span class="fa-stack fa-4x"> <i
@@ -235,7 +235,7 @@ if (strlen($_SESSION['id'] == 0)) {
 													class="fa fa-terminal fa-stack-1x fa-inverse"></i> </span> -->
 											<!-- <h2 class="StepTitle">Recherche Cartographique</h2> -->
 											<p class="cl-effect-1">
-												<a href="/indexnav.html">
+												<a href="/index.html">
 													<?php $result1 = mysqli_query($con, "SELECT * FROM activite ");
 													$num_rows1 = mysqli_num_rows($result1); {
 														?>
@@ -271,7 +271,7 @@ if (strlen($_SESSION['id'] == 0)) {
 									</div></a>
 								</div>
 
-								<div class="col-sm-4"><a href="/indexnav.html">
+								<div class="col-sm-4"><a href="/index.html">
 									<div class="panel panel-white no-radius text-center">
 										<!-- <div class="panel-body"> -->
 											<span class="ffa-stack fa-2x"> 
@@ -337,7 +337,7 @@ if (strlen($_SESSION['id'] == 0)) {
 													class="fa fa-terminal fa-stack-1x fa-inverse"></i> </span> -->
 											<!-- <h2 class="StepTitle">Recherche Cartographique</h2> -->
 											<!-- <p class="cl-effect-1">
-												<a href="/indexnav.html">
+												<a href="/index.html">
 													<?php $result1 = mysqli_query($con, "SELECT * FROM activite ");
 													$num_rows1 = mysqli_num_rows($result1); {
 														?>

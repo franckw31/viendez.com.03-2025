@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (isset($_SESSION['Email_Session'])) {
-    header("Location: https://poker31.org/indexnav.html");
+    header("Location: /index.html");
     die();
 }
 
