@@ -1,7 +1,7 @@
 <?php
 session_start();
 error_reporting(0);
-include('panel/include/config.php'); 
+include('include/config.php'); 
 
 $gid_part = intval($_GET['part']); // get value
 $gid_acti = intval($_GET['acti']);

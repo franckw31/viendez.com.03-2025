@@ -26,6 +26,8 @@ if (strlen($_SESSION['id'] == 0)) {
         $addon = $_POST['addon'];
         $gain = $_POST['gain'];
         $ip_ins = $_POST['ip-ins'];
+        $tf = isset($_POST['tf']) ? $_POST['tf'] : 0;
+        $points = isset($_POST['points']) ? $_POST['points'] : 0;
         //  	$id_challenge = $_POST['id-challenge'];
         //    $id_membre_vainqueur = $_POST['vainqueur'];
         $id_membre_vainqueur = 700;
@@ -39,7 +41,28 @@ if (strlen($_SESSION['id'] == 0)) {
         echo "cc" . $id_membre_vainqueur;
         //     $sql = mysqli_query($con, "UPDATE `participation` SET `id-membre`='$id_membre',`id-activite`='$id_activite',`id-siege`='$id_siege',`id-table`='$id_table',`option`='$option',`ordre`='$ordre',`valide`='$valide',`commentaire`='$commentaire',`classement`='$classement',`points`='$points',`bounty`='$bounty',`gain`='$gain',`recave`='$recave',`addon`='$addon',`ds`= CURRENT_TIMESTAMP,`ip-ins`='1',`ip-mod`='2',`ip-sup`='3' WHERE `id-participation` = '$id'");
 
-        $sql = mysqli_query($con, "UPDATE `participation` SET `id-membre`='$id_membre',`id-activite`='$id_activite',`id-siege`='$id_siege',`id-table`='$id_table',`id-challenge`='$id_challenge',`option`='$option',`ordre`='$ordre',`valide`='$valide' ,`commentaire`='$commentaire',`classement`='$classement' ,`bounty`='$bounty' ,`gain`='$gain',`recave`='$recave',`addon`='$addon',`ds`= CURRENT_TIMESTAMP,`ip-ins`='1',`ip-mod`='2',`ip-sup`='3'  WHERE `id-participation` = '$id'");
+        $sql = mysqli_query($con, "UPDATE `participation` SET 
+            `id-membre`='$id_membre',
+            `id-activite`='$id_activite',
+            `id-siege`='$id_siege',
+            `id-table`='$id_table',
+            `id-challenge`='$id_challenge',
+            `option`='$option',
+            `ordre`='$ordre',
+            `valide`='$valide',
+            `commentaire`='$commentaire',
+            `classement`='$classement',
+            `points`='$points',
+            `tf`='$tf', 
+            `bounty`='$bounty',
+            `gain`='$gain',
+            `recave`='$recave',
+            `addon`='$addon',
+            `ds`= CURRENT_TIMESTAMP,
+            `ip-ins`='1',
+            `ip-mod`='2',
+            `ip-sup`='3'  
+            WHERE `id-participation` = '$id'");
 
 
         $_SESSION['msg'] = "MAJ Ok !!";
@@ -362,34 +385,8 @@ if (strlen($_SESSION['id'] == 0)) {
                                                                                             value="<?php echo $row['id-activite']; ?>">
                                                                                     </td>
                                                                                     </tr>
-                                                                                    <tr>
-                                                                                        <th>Table</th>
-                                                                                        <td><input class="form-control"
-                                                                                                id="id-table" name="id-table"
-                                                                                                type="text"
-                                                                                                value="<?php echo $row['id-table']; ?>">
-                                                                                        </td>
-                                                                                        <th>Siege</th>
-                                                                                        <td><input class="form-control"
-                                                                                                id="id-siege" name="id-siege"
-                                                                                                type="text"
-                                                                                                value="<?php echo $row['id-siege']; ?>">
-                                                                                        </td>
-                                                                                    </tr>
-                                                                                    <tr>
-                                                                                        <th>Recave</th>
-                                                                                        <td><input class="form-control"
-                                                                                                id="recave" name="recave"
-                                                                                                type="text"
-                                                                                                value="<?php echo $row['recave']; ?>">
-                                                                                        </td>
-                                                                                        <th>Addon</th>
-                                                                                        <td><input class="form-control"
-                                                                                                id="addon" name="addon"
-                                                                                                type="text"
-                                                                                                value="<?php echo $row['addon']; ?>">
-                                                                                        </td>
-                                                                                    </tr>
+                                                                                    
+                                                                                    
                                                                                     <tr>
                                                                                         <th>Statut</th>
                                                                                         <!-- <td><input
@@ -435,6 +432,34 @@ if (strlen($_SESSION['id'] == 0)) {
                                                                                         </td>
                                                                                     </tr>
                                                                                     <tr>
+                                                                                        <th>Table</th>
+                                                                                        <td><input class="form-control"
+                                                                                                id="id-table" name="id-table"
+                                                                                                type="text"
+                                                                                                value="<?php echo $row['id-table']; ?>">
+                                                                                        </td>
+                                                                                        <th>Siege</th>
+                                                                                        <td><input class="form-control"
+                                                                                                id="id-siege" name="id-siege"
+                                                                                                type="text"
+                                                                                                value="<?php echo $row['id-siege']; ?>">
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                    <tr>
+                                                                                        <th>Recave</th>
+                                                                                        <td><input class="form-control"
+                                                                                                id="recave" name="recave"
+                                                                                                type="text"
+                                                                                                value="<?php echo $row['recave']; ?>">
+                                                                                        </td>
+                                                                                        <th>Addon</th>
+                                                                                        <td><input class="form-control"
+                                                                                                id="addon" name="addon"
+                                                                                                type="text"
+                                                                                                value="<?php echo $row['addon']; ?>">
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                    <tr>
                                                                                         <th>Classement</th>
                                                                                         <td><input class="form-control"
                                                                                                 id="classement"
@@ -447,7 +472,20 @@ if (strlen($_SESSION['id'] == 0)) {
                                                                                                 type="text"
                                                                                                 value="<?php echo $row['bounty']; ?>">
                                                                                         </td>
-
+                                                                                    </tr>
+                                                                                    <tr>
+                                                                                        <th>Table Finale</th> 
+                                                                                        <td><input class="form-control"
+                                                                                                id="tf" name="tf"
+                                                                                                type="text"
+                                                                                                value="<?php echo $row['tf']; ?>">
+                                                                                        </td>
+                                                                                        <th>Points</th>
+                                                                                        <td><input class="form-control"
+                                                                                                id="points" name="points"
+                                                                                                type="text" 
+                                                                                                value="<?php echo $row['points']; ?>">
+                                                                                        </td>
                                                                                     </tr>
                                                                                     <tr>
                                                                                         <th>Gains</th>

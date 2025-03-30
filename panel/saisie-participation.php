@@ -15,7 +15,7 @@ if (strlen($_SESSION['id']) == 0) {
         'charset'  => 'utf8mb4'
     ]);
     $qui = $_SESSION['id'];
-    // echo $_SESSION['id'];
+    echo $_SESSION['id'];
     function getDBConnection() {
         static $conn = null;
         if ($conn === null) {
@@ -114,349 +114,6 @@ if (strlen($_SESSION['id']) == 0) {
             text-align: center !important;
             padding: 8px !important;
         }
-        #employeeTable {
-            font-size: 20px;
-        }
-        #employeeTable thead th {
-            font-size: 16px;
-            font-weight: bold;
-        }
-        #employeeTable tfoot th {
-            font-size: 16px;
-            font-weight: bold;
-        }
-        .form-select, .btn {
-            font-size: 16px;
-        }
-        .breadcrumb {
-            font-size: 16px;
-        }
-        h1.mainTitle, h1.mt-4 {
-            font-size: 24px;
-        }
-        /* Modification des styles de fond */
-        .container-fluid.container-fullw.bg-white {
-            background-color: transparent !important;
-        }
-        .panel-white {
-            background: transparent !important;
-        }
-        .card {
-            background: transparent !important;
-        }
-        .card-body {
-            background: transparent !important;
-        }
-        /* Styles du tableau */
-        .table {
-            background-color: #ffffff;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            border-radius: 4px;
-        }
-        .table thead th {
-            background-color: #f8f9fa;
-        }
-        .table tbody tr:hover {
-            background-color: rgba(0, 123, 255, 0.25);
-        }
-        /* Styles pour le formulaire de recherche */
-        .dataTables_wrapper .row:first-child {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        .dataTables_filter {
-            margin: 15px auto;
-            padding: 15px 25px;
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            text-align: center !important;
-            float: none !important;
-        }
-        /* Style pour la section des boutons */
-        .dt-buttons {
-            margin: 15px auto;
-            padding: 15px 25px;
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            text-align: center !important;
-            float: none !important;
-        }
-        .dt-buttons .dt-button {
-            margin: 0 4px !important;
-        }
-        /* Ajustement pour le conteneur des boutons et de la recherche */
-        .col:first-child, .col:last-child {
-            flex: 0 0 auto;
-            width: auto;
-        }
-        /* Styles responsive */
-        @media (max-width: 768px) {
-            .col-lg-8 {
-                width: 100% !important;
-                padding: 0 10px;
-            }
-            
-            #employeeTable {
-                font-size: 14px;
-            }
-
-            .dataTables_filter {
-                width: 100%;
-                margin: 10px 0;
-            }
-
-            .dataTables_filter input {
-                width: 100% !important;
-                margin: 5px 0;
-            }
-
-            .dt-buttons {
-                width: 100%;
-                margin: 10px 0;
-                display: flex;
-                flex-wrap: wrap;
-                justify-content: center;
-                gap: 5px;
-            }
-
-            .dt-button {
-                flex: 1;
-                min-width: 80px;
-                margin: 2px !important;
-                padding: 6px 8px !important;
-                font-size: 12px;
-            }
-
-            .form-select {
-                width: 100% !important;
-            }
-
-            .d-flex {
-                flex-direction: column;
-            }
-
-            .btn-primary {
-                width: 100%;
-                margin-top: 10px;
-            }
-
-            .table-responsive {
-                margin: 0 -10px;
-                padding: 0 10px;
-                width: calc(100% + 20px);
-            }
-
-            .col-small {
-                width: 60px !important;
-            }
-
-            .dataTables_wrapper .row {
-                margin: 0;
-            }
-
-            .dataTables_paginate {
-                width: 100%;
-                text-align: center !important;
-                margin-top: 15px;
-            }
-
-            .dataTables_info {
-                text-align: center;
-                width: 100%;
-                margin-bottom: 10px;
-            }
-        }
-
-        /* Ajustements pour très petits écrans */
-        @media (max-width: 480px) {
-            #employeeTable {
-                font-size: 12px;
-            }
-
-            .col-small {
-                width: 45px !important;
-            }
-
-            h1.mainTitle, h1.mt-4 {
-                font-size: 20px;
-            }
-        }
-        /* Style pour le titre principal */
-        h1.mt-4 {
-            font-size: 26px;
-            font-weight: 700;
-            color: #2c3e50;
-            text-align: center;
-            margin: 30px auto !important;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            max-width: 600px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        @media (max-width: 768px) {
-            h1.mt-4 {
-                font-size: 24px;
-                margin: 15px auto !important;
-                padding: 15px;
-                width: calc(100% - 30px);
-            }
-        }
-        /* Prévenir le défilement horizontal */
-        .wrap-content {
-            overflow-x: hidden;
-        }
-        
-        .table-responsive {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            max-width: 100%;
-            margin: 0;
-            padding: 0;
-        }
-
-        /* Ajuster les colonnes sur mobile */
-        @media (max-width: 768px) {
-            #employeeTable {
-                width: 100% !important;
-                min-width: 500px; /* Largeur minimum pour garder la lisibilité */
-            }
-
-            .col-lg-8 {
-                padding: 0;
-            }
-
-            .container-fluid.px-4 {
-                padding: 0 !important;
-            }
-
-            .card-body {
-                padding: 0.5rem !important;
-            }
-
-            /* Optimiser l'espace des colonnes */
-            .col-small {
-                width: 50px !important;
-                min-width: 50px !important;
-                padding: 4px !important;
-            }
-
-            td, th {
-                padding: 4px !important;
-                white-space: nowrap;
-            }
-        }
-
-        /* Empêcher le défilement horizontal */
-        html, body {
-            overflow-x: hidden;
-            width: 100%;
-            position: relative;
-        }
-
-        .app-content, 
-        .wrap-content,
-        .container,
-        .container-fluid,
-        .row,
-        .col-md-12,
-        .panel-body,
-        .card-body {
-            max-width: 100%;
-            padding-left: 0 !important;
-            padding-right: 0 !important;
-            margin-left: 0 !important;
-            margin-right: 0 !important;
-        }
-
-        .table-responsive {
-            margin: 0;
-            border: none;
-            width: 100%;
-        }
-
-        @media (max-width: 768px) {
-            .container-fluid.px-4 {
-                padding: 0 !important;
-            }
-
-            #employeeTable {
-                display: block;
-                width: 100% !important;
-            }
-
-            .dataTables_wrapper {
-                padding: 0 10px;
-            }
-
-            .col-small {
-                min-width: auto !important;
-            }
-
-            td, th {
-                padding: 4px !important;
-                font-size: 12px;
-            }
-        }
-        /* Styles pour le formulaire de filtrage */
-        form.mb-4 {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 20px auto;
-            max-width: 500px;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        form.mb-4 .d-flex {
-            width: 100%;
-            gap: 15px !important;
-            justify-content: center !important;
-        }
-
-        form.mb-4 .form-select {
-            max-width: 300px;
-            flex: 1;
-        }
-
-        form.mb-4 .btn-primary {
-            min-width: 100px;
-        }
-
-        @media (max-width: 768px) {
-            form.mb-4 {
-                margin: 10px;
-                padding: 10px;
-            }
-            
-            form.mb-4 .d-flex {
-                flex-direction: column;
-            }
-
-            form.mb-4 .form-select {
-                max-width: 100%;
-            }
-        }
-        /* Adjusted style for the main title */
-        h1.mt-4 {
-            margin: 0 auto 30px auto !important;
-            max-width: 500px;
-            width: 100%;
-        }
     </style>
     <script type="text/javascript">
         new DataTable('table.display');
@@ -492,19 +149,19 @@ if (strlen($_SESSION['id']) == 0) {
             <?php include('include/header.php'); ?>
             <div class="main-content">
                 <div class="wrap-content container" id="container">
-                    <section id="ppage-title">
+                    <section id="page-title">
                         <div class="row">
                             <div class="col-sm-8">
-                                <!-- Removed the redundant title -->
+                                <h1 class="mainTitle">Admin | Liste des membres</h1>
                             </div>
-                            <ol class="bbreadcrumb"></ol>
+                            <ol class="breadcrumb"></ol>
                         </div>
                     </section>
                     <div class="container-fluid container-fullw bg-white">
                         <div class="row">
-                            <div class="ccol-md-12">
-                                <div class="row mmargin-top-30">
-                                    <div class="ccol-lg-8 ccol-md-12">
+                            <div class="col-md-12">
+                                <div class="row margin-top-30">
+                                    <div class="col-lg-8 col-md-12">
                                         <div class="panel panel-white">
                                             <div class="panel-body">
                                                 <div id="layoutSidenav_content">
@@ -644,13 +301,13 @@ if (strlen($_SESSION['id']) == 0) {
                 language: { url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/fr-FR.json' },
                 dom: '<"row"<"col"B><"col"f>>rt<"row"<"col"i><"col"p>>',
                 buttons: ['copy', 'excel', 'pdf', 'print'],
-                pageLength: 15,
+                pageLength: 10,
                 order: [[3, 'desc']], // Tri par points décroissant
                 columnDefs: [
                     { targets: 3, className: 'points-cell' },
                     { searchable: false, orderable: false, targets: 0 }, // Compteur
                     { visible: false, targets: [1, 8, 9] }, // Cache ID, Activités et Challenges
-                    { className: 'ccol-small', targets: [4,5,6,7] }
+                    { className: 'col-small', targets: [4,5,6,7] }
                 ],
                 responsive: true,
                 footerCallback: function(row, data, start, end, display) {

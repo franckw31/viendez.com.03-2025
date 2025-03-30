@@ -269,25 +269,25 @@ if (strlen($idmembresession == 0)) {
 				</li>
 
 				<li>
-					<a href="patient-search.php">
+					<a href="quick-geo.php">
 						<div class="item-content">
 							<div class="item-media">
 								<i class="ti-search"></i>
 							</div>
 							<div class="item-inner">
-								<span class="title"> Search </span>
+								<span class="title"> Quick Géoloc. </span>
 							</div>
 						</div>
 					</a>
 				</li>
 				<li>
-					<a href="https://poker31.org/cash.php">
+					<a href="quick-part.php">
 						<div class="item-content">
 							<div class="item-media">
 								<i class="ti-search"></i>
 							</div>
 							<div class="item-inner">
-								<span class="title"> Cash </span>
+								<span class="title"> Quick Particip. </span>
 							</div>
 						</div>
 					</a>

@@ -1,7 +1,4 @@
 <?php
-session_start();
-$log=$_SESSION['id'];
-echo $log;
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 include ('include/config.php');
@@ -691,50 +688,6 @@ $days_fr = array('Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim');
             gap: 15px;
             align-items: center;
         }
-
-        /* Ajout des styles pour le bouton d'inscription */
-        .inscription-btn {
-            display: inline-block;
-            padding: 6px 12px;
-            background-color: #1a73e8;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 13px;
-            cursor: pointer;
-            text-decoration: none;
-            margin-top: 8px;
-            transition: background-color 0.2s;
-        }
-
-        .inscription-btn:hover {
-            background-color: #1557b0;
-        }
-
-        /* Ajout du style pour le groupe de boutons dans le titre */
-        .form-title-buttons {
-            display: inline-flex;
-            gap: 10px;
-            align-items: center;
-            margin-left: 5px;
-        }
-
-        .form-title-button {
-            color: #1a73e8;
-            text-decoration: none;
-            font-size: 14px;
-        }
-
-        .form-title-button span {
-            border: 1px solid currentColor;
-            padding: 2px 6px;
-            border-radius: 4px;
-            white-space: nowrap;
-        }
-
-        .form-title-button:hover span {
-            background-color: rgba(26,115,232,0.1);
-        }
     </style>
 </head>
 <body>
@@ -1013,9 +966,7 @@ $days_fr = array('Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim');
                             return `
                                 <div class="event" data-event-id="${event.id}" onclick="editEvent(${event.id})">
                                     <div class="event-title-line">
-                                        <strong><a href="/panel/voir-activite.php?uid=${event.id}" 
-                                        style="color: inherit; text-decoration: none;">
-                                        ${event.title || 'Sans titre'}</a></strong>
+                                        <strong>${event.title || 'Sans titre'}</strong>
                                         <span class="event-id">(${event.id})</span>
                                         ${(event.buyin > 0 || event.rake > 0 || event.recave > 0) ? 
                                             `<div class="event-details">
@@ -1040,10 +991,6 @@ $days_fr = array('Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim');
                                             </span>
                                         </div>
                                     </div>
-                                    <a href="/panel/inscription.php?uid=${event.id}" class="inscription-btn" 
-                                       onclick="event.stopPropagation();">
-                                        Réservation Directe
-                                    </a>
                                 </div>
                             `;
                         }).join('') :
@@ -1106,18 +1053,17 @@ $days_fr = array('Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim');
               //      year: 'numeric'
                 });
                 
-                // Create title with linked buttons
+                // Create title with linked ID
                 document.getElementById('formTitle').innerHTML = 
-                    `Evénement du ${eventDate} <div class="form-title-buttons">
-                        <a href="/panel/voir-activite.php?uid=${event.id}" 
-                           class="form-title-button">
-                            <span>Accés Activité</span>
-                        </a>
-                        <a href="/panel/inscription.php?uid=${event.id}" 
-                           class="form-title-button">
-                            <span>Réservation Directe</span>
-                        </a>
-                    </div>`;
+                    `Evénement du ${eventDate} <a href="/panel/voir-activite.php?uid=${event.id}" 
+                    style="color: #1a73e8; text-decoration: none; margin-left: 5px; font-size: 14px;">
+                    <span style="border: 1px solid currentColor; padding: 2px 6px; border-radius: 4px;">
+                    Accés Détails Activité ↗ </span></a>`;
+//                document.getElementById('formTitle').innerHTML = 
+//                    `Evénement du ${eventDate} (ID: ${event.id} <a href="/panel/voir-activite.php?uid=${event.id}" 
+//                    style="color: #1a73e8; text-decoration: none; margin-left: 5px; font-size: 14px;">
+//                    <span style="border: 1px solid currentColor; padding: 2px 6px; border-radius: 4px;">
+//                    Accés Activité ↗ </span></a>)`;
                 
                 document.getElementById('eventId').value = event.id;
                 document.getElementById('eventTitle').value = event.title || '';
