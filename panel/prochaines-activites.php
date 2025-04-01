@@ -175,7 +175,7 @@ if (strlen($_SESSION['id'] == 0)) {
                                                                             $maintenantnum=strtotime(date("Y-m-d")); 
                                                                             //echo "-".$maintenantnum."-";
                                                                                 //$ret = "&"i_query($con, "select * from activite where date_depart <> '0000-00-00' and datediff(date_depart,now())>-1 order by date_depart");
-                                                                                $ret = mysqli_query($con, "select * from activite ORDER by date_depart DESC");
+                                                                                $ret = mysqli_query($con, "select * from activite ORDER by date_depart ASC");
                                                                                 $cnt = 1;
                                                                                 while ($row = mysqli_fetch_array($ret)) { ?>
                                                                             <tr>

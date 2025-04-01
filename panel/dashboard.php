@@ -203,7 +203,7 @@ if (strlen($_SESSION['id'] == 0)) {
 										</div>
 									</div>
 								</div>
-								<div class="col-sm-4"><a href="recherche-loisir.php">
+								<div class="col-sm-4"><a href="quick-part.php">
 									<div class="panel panel-white-dico no-radius text-center">
 										<div class="panel-body">
 											<span class="fa-stack fa-4x"> 
@@ -213,7 +213,7 @@ if (strlen($_SESSION['id'] == 0)) {
 
 											<p class="links cl-effect-1">
 												<a href="book-appointment.php">
-													<a href="recherche-loisir.php">
+													<a href="quick-part.php">
 														<?php
 														$sql = mysqli_query($con, "SELECT * FROM tblcontactus where  IsRead is null");
 														$num_rows22 = mysqli_num_rows($sql);
@@ -259,14 +259,14 @@ if (strlen($_SESSION['id'] == 0)) {
 									</div></a>
 								</div>
 
-								<div class="col-sm-4"><a href="liste-membres-container.php">
+								<div class="col-sm-4"><a href="quick-part.php">
 									<div class="panel panel-white no-radius text-center">
 										<!-- <div class="panel-body"> -->
 											<span class="ffa-stack fa-2x"> 
 												<!-- <i	class="fa fa-square fa-stack-2x text-primary"></i> -->
 												<!-- <i	class="fa fa-terminal fa-stack-1x fa-inverse"></i> -->
 											</span>
-											<h2 class="StepTitle">Recherches</h2>
+											<h2 class="StepTitle">Participation</h2>
 
 									</div></a>
 								</div>
@@ -305,7 +305,7 @@ if (strlen($_SESSION['id'] == 0)) {
 										</div>
 									</div>
 								</div>
-								<div class="col-sm-4"><a href="recherche-loisir.php">
+								<div class="col-sm-4"><a href="quick-par.php">
 									<div class="panel panel-white-blindest no-radius text-center">
 										<div class="panel-body">
 											<span class="fa-stack fa-4x"> 
