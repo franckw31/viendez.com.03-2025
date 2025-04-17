@@ -38,6 +38,7 @@ if (strlen($_SESSION['id']) == 0) {
                     SUM(p.points) as points,
                     SUM(p.tf) as tf,
                     SUM(p.recave) as recave,
+                    SUM(p.remise) as remise,                    
                     COUNT(DISTINCT p.`id-participation`) as nb_participations,
                     GROUP_CONCAT(DISTINCT a.`titre-activite` ORDER BY a.`titre-activite` ASC) as activites,
                     GROUP_CONCAT(DISTINCT c.titre_challenge ORDER BY c.titre_challenge ASC) as challenges
@@ -552,6 +553,7 @@ if (strlen($_SESSION['id']) == 0) {
                                                                                     <th class="col-small">TF</th>
                                                                                     <th class="col-small">Recave(s)</th>
                                                                                     <th>Cagnotte</th>
+                                                                                    <th class="col-small">Jetons</th>
                                                                                     <th>Activités</th>
                                                                                     <th>Challenges</th>
                                                                                 </tr>
@@ -568,7 +570,24 @@ if (strlen($_SESSION['id']) == 0) {
                                                                                     <td><?= $row['nb_participations'] ?></td>
                                                                                     <td><?= $row['tf'] ?? 0 ?></td>
                                                                                     <td><?= $row['recave'] ?? 0 ?></td>
-                                                                                    <td><?= ($row['nb_participations'] + ($row['recave'] ?? 0)) * 3 ?> €</td>
+                                                                                    <td><?= (($row['nb_participations'] + ($row['recave'] ?? 0)) - ($row['remise'] ?? 0)) * 3 ?> €</td>
+                                                                                    <td>
+                                                                                        <?php
+                                                                                        $presence = $row['nb_participations'];
+                                                                                        $jetons = 0;
+                                                                                        if ($presence == 1) $jetons = 35000;
+                                                                                        elseif ($presence == 2) $jetons = 37500;
+                                                                                        elseif ($presence == 3) $jetons = 40000;
+                                                                                        elseif ($presence == 4) $jetons = 42500;
+                                                                                        elseif ($presence == 5) $jetons = 45000;
+                                                                                        elseif ($presence == 6) $jetons = 46000;
+                                                                                        elseif ($presence == 7) $jetons = 47000;
+                                                                                        elseif ($presence == 8) $jetons = 48000;
+                                                                                        elseif ($presence == 9) $jetons = 49000;
+                                                                                        elseif ($presence == 10) $jetons = 50000;
+                                                                                        echo $jetons;
+                                                                                        ?>
+                                                                                    </td>
                                                                                     <td><?= $row['activites'] ?></td>
                                                                                     <td><?= $row['challenges'] ?></td>
                                                                                 </tr>
@@ -577,6 +596,7 @@ if (strlen($_SESSION['id']) == 0) {
                                                                             <tfoot>
                                                                                 <tr>
                                                                                     <th colspan="3" style="text-align:left">Total:</th>
+                                                                                    <th></th>
                                                                                     <th></th>
                                                                                     <th></th>
                                                                                     <th></th>
@@ -649,8 +669,8 @@ if (strlen($_SESSION['id']) == 0) {
                 columnDefs: [
                     { targets: 3, className: 'points-cell' },
                     { searchable: false, orderable: false, targets: 0 }, // Compteur
-                    { visible: false, targets: [1, 8, 9] }, // Cache ID, Activités et Challenges
-                    { className: 'ccol-small', targets: [4,5,6,7] }
+                    { visible: false, targets: [1, 9, 10] }, // Cache ID, Activités et Challenges
+                    { className: 'ccol-small', targets: [4,5,6,7,8] }
                 ],
                 responsive: true,
                 footerCallback: function(row, data, start, end, display) {
@@ -686,6 +706,11 @@ if (strlen($_SESSION['id']) == 0) {
                             return parseInt(a || 0) + parseInt(b || 0);
                         }, 0);
                     $(api.column(7).footer()).html(cagnotteTotal + ' €');
+
+                    // Jetons total (colonne 8)
+                    var jetonsTotal = api.column(8, {search:'applied'}).data()
+                        .reduce((a, b) => parseInt(a || 0) + parseInt(b || 0), 0);
+                    $(api.column(8).footer()).html(jetonsTotal);
                 }
             });
 

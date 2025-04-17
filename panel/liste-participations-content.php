@@ -27,7 +27,6 @@
                                                 <th>activite</th>
                                                 <th>commentaire</th>
                                                 <th>Date</th>
-                                                <th>Action</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -55,12 +54,6 @@
                                                     </td>
                                                     <td>
                                                         <?php echo $row['ds']; ?>
-                                                    </td>
-                                                    <td>
-                                                        <a href="voir-participation.php?id=<?php echo $row['id-participation']; ?>">
-                                                            <i class="fa fa-edit"></i></a>
-                                                        <a href="voir-membre.php?id=<?php echo $row['id-membre']; ?>">
-                                                            <i class="fa fa-edit" aria-hidden="true"></i></a>
                                                     </td>
                                                 </tr>
                                                 <?php $cnt = $cnt + 1;

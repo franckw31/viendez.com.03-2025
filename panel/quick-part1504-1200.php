@@ -165,10 +165,10 @@ if (isset($_POST['update_participation'])) {
     }
 
     if ($update_success_overall && $selected_activity_id_for_update) {
-            $sql_update = "UPDATE participation SET
+        $sql_update = "UPDATE participation SET
                        challenger = ?, `id-table` = ?, `id-siege` = ?, cout_in = ?,
                        rake = ?, recave = ?, classement = ?, tf = ?, points = ?,
-                       cagnotte = ?, remise = ?
+                       cagnotte = ?
                        WHERE `id-membre` = ? AND `id-activite` = ?";
 
         $stmt_update = mysqli_prepare($con, $sql_update);
@@ -207,18 +207,12 @@ if (isset($_POST['update_participation'])) {
                     }
 
                     $calculated_cagnotte = ($challenger == 1) ? (($recave * 3) + 3) : 0;
-                    // Apply remise deduction if remise is checked
-                    if (isset($participation['remise']) && $participation['remise']) {
-                        $calculated_cagnotte = max(0, $calculated_cagnotte - 3);
-                    }
 
-                    $remise = isset($participation['remise']) ? 1 : 0;
-                    mysqli_stmt_bind_param($stmt_update, "iiiddiiidiiii",
+                    mysqli_stmt_bind_param($stmt_update, "iiiddiiidiii",
                         $challenger, $table, $siege, $calculated_cout_in,
                         $participation_rake_value, $recave, $classement, $tf,
                         $calculated_points,
                         $calculated_cagnotte,
-                        $remise,
                         $membre_id, $selected_activity_id_for_update
                     );
 
@@ -954,13 +948,7 @@ if ($selected_activity !== null) {
                                                     <th>Joueur *</th>
                                                     <td>
                                                          <?php
-                                                         $activity_id = isset($_SESSION['selected_activity']) ? $_SESSION['selected_activity'] : (isset($_POST['actisup']) ? $_POST['actisup'] : null);
-                                                         $activity_filter = $activity_id ? "WHERE p.`id-activite` = " . intval($activity_id) : "";
-                                                         $membres_del = mysqli_query($con, "SELECT DISTINCT m.`id-membre`, m.`pseudo` 
-                                                           FROM `membres` m
-                                                           JOIN `participation` p ON m.`id-membre` = p.`id-membre`
-                                                           $activity_filter
-                                                           ORDER BY m.`pseudo` ASC");
+                                                         $membres_del = mysqli_query($con, "SELECT `id-membre`,`pseudo` FROM `membres` ORDER BY `pseudo` ASC");
                                                          echo "<select name='membresup' class='form-control' required><option value=''>-- Sélectionner Pseudo --</option>";
                                                          if ($membres_del) {
                                                             while ($choix = mysqli_fetch_assoc($membres_del)) { echo "<option value='" . htmlspecialchars($choix["id-membre"]) . "'>" . htmlspecialchars($choix["pseudo"]) . "</option>"; }
@@ -974,10 +962,8 @@ if ($selected_activity !== null) {
                                                     <th>Activité *</th>
                                                     <td>
                                                          <?php
-                                                         // Calculate date 7 days ago
-                                                         $seven_days_ago = date('Y-m-d', strtotime('-7 days', strtotime($actu2)));
-                                                         $safe_seven_days_ago_date = mysqli_real_escape_string($con, $seven_days_ago);
-                                                         $acti_del = mysqli_query($con, "SELECT `id-activite`,`titre-activite`,`date_depart` FROM `activite` WHERE ( `date_depart` >= '$safe_seven_days_ago_date') ORDER BY `date_depart` ASC");
+                                                         $safe_actu2_date = mysqli_real_escape_string($con, $actu2);
+                                                         $acti_del = mysqli_query($con, "SELECT `id-activite`,`titre-activite`,`date_depart` FROM `activite` WHERE ( `date_depart` >= '$safe_actu2_date') ORDER BY `date_depart` ASC");
                                                          echo "<select name='actisup' class='form-control' required><option value=''>-- Sélectionner Date --</option>";
                                                          if ($acti_del) {
                                                              $current_selected_activity = isset($_SESSION['selected_activity']) ? $_SESSION['selected_activity'] : null;
@@ -1033,15 +1019,14 @@ if ($selected_activity !== null) {
                                         <th>Joueur</th>
                                         <th class="cell-center">T</th>
                                         <th class="cell-center">S</th>
-                                        <th class="cell-right">Buy-in</th>
+                                        <th class="cell-right">Buy-in Act.</th>
                                         <th class="cell-right">Bounty</th> 
-                                        <th class="cell-right">Rake</th>
-                                        <th class="cell-right">Cout</th>
-                                        <th class="cell-right">Recaves</th>
+                                        <th class="cell-right">Rake Part.</th>
+                                        <th class="cell-right">Cout In</th>
+                                        <th class="cell-right">Rec. (0-4)</th>
                                         <th class="cell-center">Clas.</th>
                                         <th class="cell-center">TF</th>
                                         <th class="cell-right">Pts</th>
-                                        <th class="cell-center">Remise</th>
                                         <th class="cell-right">Cagnotte</th>
                                     </tr>
                                                     </thead>
@@ -1054,7 +1039,7 @@ if ($selected_activity !== null) {
                                                                      p.`id-membre`, m.pseudo, p.`id-activite`, a.`titre-activite`, a.`date_depart`,
                                                                      p.`id-table`, p.`id-siege`, p.challenger, p.recave, p.classement,
                                                                      p.cout_in, p.rake AS participation_rake, a.bounty,
-                                                                     p.points, p.cagnotte, p.tf, p.remise, a.buyin AS activite_buyin
+                                                                     p.points, p.cagnotte, p.tf, a.buyin AS activite_buyin
                                                                    FROM participation p
                                                                    JOIN membres m ON p.`id-membre` = m.`id-membre`
                                                                    JOIN activite a ON p.`id-activite` = a.`id-activite`";
@@ -1180,9 +1165,7 @@ if ($selected_activity !== null) {
                                                                         // Column 10: Pts (Readonly Input - numeric sort using hidden span with class)
                                                                         echo "<td class='cell-right'><span class='sort-value' style='display: none;'>" . $raw_points . "</span><input type='number' name='participations[$index][points_display]' value='" . htmlspecialchars((string)$raw_points) . "' step='1' placeholder='0' readonly title='Calc: 0 si non Ch, sinon 1+TF(+1)+Clas1(+1)'></td>";
                                                                         // Column 11: Cagnotte (Readonly Input - numeric sort using hidden span with class)
-                                        $remise_checked = $row['remise'] ? 'checked' : '';
-                                        echo "<td class='cell-center'><span class='sort-value' style='display: none;'>" . $row['remise'] . "</span><input type='checkbox' name='participations[$index][remise]' value='1' $remise_checked " . ($selected_activity ? '' : ' disabled') . "></td>";
-                                        echo "<td class='cell-center'><span class='sort-value' style='display: none;'>" . $raw_cagnotte . "</span><input type='number' name='participations[$index][cagnotte_display]' value='" . htmlspecialchars((string)$raw_cagnotte) . "' step='1' placeholder='0' readonly title='Calc: Si Ch.=(Recave*3)+3, sinon 0'></td>";
+                                                                        echo "<td class='cell-center'><span class='sort-value' style='display: none;'>" . $raw_cagnotte . "</span><input type='number' name='participations[$index][cagnotte_display]' value='" . htmlspecialchars((string)$raw_cagnotte) . "' step='1' placeholder='0' readonly title='Calc: Si Ch.=(Recave*3)+3, sinon 0'></td>";
                                                                         echo "</tr>";
                                                                         $index++;
                                                                     }
@@ -1238,7 +1221,6 @@ if ($selected_activity !== null) {
                                                              <td></td>
                                                              <td colspan="1"></td>  
                                                              <td></td>
-                                                             <td class="cell-center">0</td>
                                                              <td class="cell-right"><?php echo "C = C + ".$total_cagnotte; ?></td>
                                                          </tr>
                                                          <?php if ($selected_activity): // Show Update button only if activity is selected ?>

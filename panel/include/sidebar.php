@@ -1,6 +1,3 @@
-<html>
-	<head>
-		<body>
 <?php
 session_start();
 error_reporting(0);
@@ -249,15 +246,15 @@ if (strlen($idmembresession == 0)) {
 								<i class="ti-file"></i>
 							</div>
 							<div class="item-inner">
-								<span class="title"> Pages </span><i class="icon-arrow"></i>
+								<span class="title"> Résultats </span><i class="icon-arrow"></i>
 							</div>
 						</div>
 					</a>
 					<ul class="sub-menu">
 
 						<li>
-							<a href="about-us.php">
-								<span class="title">About Us </span>
+							<a href="liste-membres-part.php">
+								<span class="title">Resultats Partie </span>
 							</a>
 						</li>
 						<li>
@@ -578,6 +575,3 @@ else
 <?php 
 }	
 }	; ?>
-</body>
-</head>
-</html>

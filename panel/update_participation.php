@@ -37,12 +37,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Vérification que le champ existe
         $fields_info = mysqli_query($conn, "DESCRIBE participation");
         $valid_fields = [];
+        $recave_type = '';
         while ($field_info = mysqli_fetch_assoc($fields_info)) {
             $valid_fields[] = $field_info['Field'];
+            if ($field_info['Field'] === 'recave') {
+                $recave_type = $field_info['Type'];
+            }
         }
         
         if (!in_array($field, $valid_fields)) {
             throw new Exception("Champ '$field' invalide");
+        }
+
+        // Validation spécifique pour recave
+        if ($field === 'recave' && ($value < 0 || $value > 4)) {
+            throw new Exception("La valeur recave doit être entre 0 et 4");
         }
 
         // Requête de mise à jour

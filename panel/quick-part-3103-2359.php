@@ -68,7 +68,7 @@ if (isset($_POST['submit'])) {
 
             $default_activity_rake = 0.0;
             $default_activity_buyin = 0.0;
-            $fetch_defaults_sql = "SELECT rake, buyin, bounty FROM activite WHERE `id-activite` = ?";
+            $fetch_defaults_sql = "SELECT rake, buyin FROM activite WHERE `id-activite` = ?";
             $stmt_fetch_defaults = mysqli_prepare($con, $fetch_defaults_sql);
             if ($stmt_fetch_defaults) {
                 mysqli_stmt_bind_param($stmt_fetch_defaults, "i", $acti);
@@ -76,7 +76,6 @@ if (isset($_POST['submit'])) {
                     $defaults_result = mysqli_stmt_get_result($stmt_fetch_defaults);
                     if ($defaults_row = mysqli_fetch_assoc($defaults_result)) {
                         $default_activity_rake = floatval($defaults_row['rake'] ?? 0.0);
-                        $default_activity_bounty = floatval($defaults_row['bounty'] ?? 0.0);
                         $default_activity_buyin = floatval($defaults_row['buyin'] ?? 0.0);
                     }
                      mysqli_free_result($defaults_result);
@@ -84,8 +83,7 @@ if (isset($_POST['submit'])) {
                 mysqli_stmt_close($stmt_fetch_defaults);
             } else { error_log("Erreur préparation fetch defaults pour activité ID $acti: " . mysqli_error($con)); }
 
-            // Calculate cout_in = buyin + bounty + rake + (5 if challenger)
-            $initial_cout_in = $default_activity_buyin + $default_activity_bounty + $default_activity_rake + ($challenger ? 5 : 0);
+            $initial_cout_in = $default_activity_buyin + $default_activity_rake;
 
             $sql_quick_reg = "INSERT INTO `participation` (`id-membre`, `id-activite`, `id-table`, `id-siege`, rake, cout_in) VALUES (?, ?, ?, ?, ?, ?)";
             $stmt_reg = mysqli_prepare($con, $sql_quick_reg);
@@ -123,6 +121,25 @@ if (isset($_POST['submitsupc'])) {
             mysqli_stmt_close($stmt_del);
         } else { $_SESSION['feedback'] = "<div class='alert alert-danger'>Erreur préparation suppression rapide: " . htmlspecialchars(mysqli_error($con)) . "</div>"; }
     } else { $_SESSION['feedback'] = "<div class='alert alert-warning'>Veuillez sélectionner un joueur et une activité valides pour la suppression rapide.</div>"; }
+    header("Location: " . $_SERVER['PHP_SELF']);
+    exit;
+}
+
+// --- Handle Individual Participant Deletion ---
+if (isset($_POST['delete_participant'])) {
+    $membre_id = intval($_POST['membre_id']);
+    $activite_id = intval($_POST['activite_id']);
+    $sql_delete = "DELETE FROM `participation` WHERE `id-membre` = ? AND `id-activite` = ?";
+    $stmt_del_ind = mysqli_prepare($con, $sql_delete);
+    if ($stmt_del_ind) {
+        mysqli_stmt_bind_param($stmt_del_ind, "ii", $membre_id, $activite_id);
+        if (mysqli_stmt_execute($stmt_del_ind)) {
+             $affected_rows = mysqli_stmt_affected_rows($stmt_del_ind);
+             if ($affected_rows > 0) { $_SESSION['feedback'] = "<div class='alert alert-success'>Participant (Membre ID: $membre_id, Activité ID: $activite_id) supprimé avec succès</div>"; }
+             else { $_SESSION['feedback'] = "<div class='alert alert-info'>Aucun participant trouvé à supprimer (Membre ID: $membre_id, Activité ID: $activite_id).</div>"; }
+        } else { $_SESSION['feedback'] = "<div class='alert alert-danger'>Erreur lors de la suppression du participant: " . htmlspecialchars(mysqli_stmt_error($stmt_del_ind)) . "</div>"; }
+         mysqli_stmt_close($stmt_del_ind);
+    } else { $_SESSION['feedback'] = "<div class='alert alert-danger'>Erreur de préparation de la suppression du participant: " . htmlspecialchars(mysqli_error($con)) . "</div>"; }
     header("Location: " . $_SERVER['PHP_SELF']);
     exit;
 }
@@ -165,10 +182,10 @@ if (isset($_POST['update_participation'])) {
     }
 
     if ($update_success_overall && $selected_activity_id_for_update) {
-            $sql_update = "UPDATE participation SET
+        $sql_update = "UPDATE participation SET
                        challenger = ?, `id-table` = ?, `id-siege` = ?, cout_in = ?,
                        rake = ?, recave = ?, classement = ?, tf = ?, points = ?,
-                       cagnotte = ?, remise = ?
+                       cagnotte = ?
                        WHERE `id-membre` = ? AND `id-activite` = ?";
 
         $stmt_update = mysqli_prepare($con, $sql_update);
@@ -196,8 +213,8 @@ if (isset($_POST['update_participation'])) {
                     $classement_input = $participation['classement'] ?? null;
                     $classement = ($classement_input === '' || $classement_input === null) ? null : intval($classement_input);
 
-                    // Calculate cout_in = buyin + bounty + rake + (5 if challenger)
-                    $calculated_cout_in = $base_activity_buyin + $raw_bounty + $participation_rake_value + ($challenger ? 5 : 0);
+                    $calculated_cout_in = $base_activity_buyin + $participation_rake_value;
+                    if ($challenger == 1) $calculated_cout_in += 5;
 
                     $calculated_points = 0;
                     if ($challenger == 1) {
@@ -207,18 +224,12 @@ if (isset($_POST['update_participation'])) {
                     }
 
                     $calculated_cagnotte = ($challenger == 1) ? (($recave * 3) + 3) : 0;
-                    // Apply remise deduction if remise is checked
-                    if (isset($participation['remise']) && $participation['remise']) {
-                        $calculated_cagnotte = max(0, $calculated_cagnotte - 3);
-                    }
 
-                    $remise = isset($participation['remise']) ? 1 : 0;
-                    mysqli_stmt_bind_param($stmt_update, "iiiddiiidiiii",
+                    mysqli_stmt_bind_param($stmt_update, "iiiddiiidiii",
                         $challenger, $table, $siege, $calculated_cout_in,
                         $participation_rake_value, $recave, $classement, $tf,
                         $calculated_points,
                         $calculated_cagnotte,
-                        $remise,
                         $membre_id, $selected_activity_id_for_update
                     );
 
@@ -787,8 +798,8 @@ if ($selected_activity !== null) {
                                                     <th>Activité</th>
                                                     <td>
                                                         <?php
-                                                        // Calculate date 7 days ago
-                                                        $three_days_ago = date('Y-m-d', strtotime('-7 days', strtotime($actu2)));
+                                                        // Calculate date 3 days ago
+                                                        $three_days_ago = date('Y-m-d', strtotime('-3 days', strtotime($actu2)));
                                                         $safe_three_days_ago_date = mysqli_real_escape_string($con, $three_days_ago);
 
                                                         // Modify query to include last 3 days
@@ -954,13 +965,7 @@ if ($selected_activity !== null) {
                                                     <th>Joueur *</th>
                                                     <td>
                                                          <?php
-                                                         $activity_id = isset($_SESSION['selected_activity']) ? $_SESSION['selected_activity'] : (isset($_POST['actisup']) ? $_POST['actisup'] : null);
-                                                         $activity_filter = $activity_id ? "WHERE p.`id-activite` = " . intval($activity_id) : "";
-                                                         $membres_del = mysqli_query($con, "SELECT DISTINCT m.`id-membre`, m.`pseudo` 
-                                                           FROM `membres` m
-                                                           JOIN `participation` p ON m.`id-membre` = p.`id-membre`
-                                                           $activity_filter
-                                                           ORDER BY m.`pseudo` ASC");
+                                                         $membres_del = mysqli_query($con, "SELECT `id-membre`,`pseudo` FROM `membres` ORDER BY `pseudo` ASC");
                                                          echo "<select name='membresup' class='form-control' required><option value=''>-- Sélectionner Pseudo --</option>";
                                                          if ($membres_del) {
                                                             while ($choix = mysqli_fetch_assoc($membres_del)) { echo "<option value='" . htmlspecialchars($choix["id-membre"]) . "'>" . htmlspecialchars($choix["pseudo"]) . "</option>"; }
@@ -974,10 +979,8 @@ if ($selected_activity !== null) {
                                                     <th>Activité *</th>
                                                     <td>
                                                          <?php
-                                                         // Calculate date 7 days ago
-                                                         $seven_days_ago = date('Y-m-d', strtotime('-7 days', strtotime($actu2)));
-                                                         $safe_seven_days_ago_date = mysqli_real_escape_string($con, $seven_days_ago);
-                                                         $acti_del = mysqli_query($con, "SELECT `id-activite`,`titre-activite`,`date_depart` FROM `activite` WHERE ( `date_depart` >= '$safe_seven_days_ago_date') ORDER BY `date_depart` ASC");
+                                                         $safe_actu2_date = mysqli_real_escape_string($con, $actu2);
+                                                         $acti_del = mysqli_query($con, "SELECT `id-activite`,`titre-activite`,`date_depart` FROM `activite` WHERE ( `date_depart` >= '$safe_actu2_date') ORDER BY `date_depart` ASC");
                                                          echo "<select name='actisup' class='form-control' required><option value=''>-- Sélectionner Date --</option>";
                                                          if ($acti_del) {
                                                              $current_selected_activity = isset($_SESSION['selected_activity']) ? $_SESSION['selected_activity'] : null;
@@ -1020,7 +1023,6 @@ if ($selected_activity !== null) {
                                             $total_cout_in = 0.0;
                                             $total_recave = 0;
                                             $total_cagnotte = 0;
-                                            $total_bounty = 0.0; // Initialize bounty total
                                             // $total_participants already calculated if activity selected
                                         ?>
 
@@ -1028,22 +1030,21 @@ if ($selected_activity !== null) {
                                             <div class="table-responsive">
                                                 <table class="data-table">
                                                     <thead>
-                                    <tr>
-                                        <th class="cell-center">Ch.</th>
-                                        <th>Joueur</th>
-                                        <th class="cell-center">T</th>
-                                        <th class="cell-center">S</th>
-                                        <th class="cell-right">Buy-in</th>
-                                        <th class="cell-right">Bounty</th> 
-                                        <th class="cell-right">Rake</th>
-                                        <th class="cell-right">Cout</th>
-                                        <th class="cell-right">Recaves</th>
-                                        <th class="cell-center">Clas.</th>
-                                        <th class="cell-center">TF</th>
-                                        <th class="cell-right">Pts</th>
-                                        <th class="cell-center">Remise</th>
-                                        <th class="cell-right">Cagnotte</th>
-                                    </tr>
+                                                        <tr>
+                                                            <th class="cell-center">Ch.</th>
+                                                            <th>Joueur</th>
+                                                            <th class="cell-center">T</th>
+                                                            <th class="cell-center">S</th>
+                                                            <th class="cell-right">Buy-in Act.</th>
+                                                            <th class="cell-right">Rake Part.</th>
+                                                            <th class="cell-right">Cout In</th>
+                                                            <th class="cell-right">Rec.</th>
+                                                            <th class="cell-center">Clas.</th>
+                                                            <th class="cell-center">TF</th>
+                                                            <th class="cell-right">Pts</th>
+                                                            <th class="cell-right">Cagnotte</th>
+                                                            <th class="cell-center">Action</th>
+                                                        </tr>
                                                     </thead>
                                                     <tbody>
                                                         <?php
@@ -1053,8 +1054,8 @@ if ($selected_activity !== null) {
                                                         $query_list = "SELECT
                                                                      p.`id-membre`, m.pseudo, p.`id-activite`, a.`titre-activite`, a.`date_depart`,
                                                                      p.`id-table`, p.`id-siege`, p.challenger, p.recave, p.classement,
-                                                                     p.cout_in, p.rake AS participation_rake, a.bounty,
-                                                                     p.points, p.cagnotte, p.tf, p.remise, a.buyin AS activite_buyin
+                                                                     p.cout_in, p.rake AS participation_rake,
+                                                                     p.points, p.cagnotte, p.tf, a.buyin AS activite_buyin
                                                                    FROM participation p
                                                                    JOIN membres m ON p.`id-membre` = m.`id-membre`
                                                                    JOIN activite a ON p.`id-activite` = a.`id-activite`";
@@ -1067,8 +1068,7 @@ if ($selected_activity !== null) {
                                                         } else {
                                                             $query_list .= " WHERE a.`date_depart` >= '$safe_actu2_date'";
                                                         }
-                                                        // Sort by Challenger DESC, then Pseudo ASC, then other criteria
-                                                        $query_list .= " ORDER BY p.challenger DESC, m.pseudo ASC, a.date_depart DESC, p.`id-table` ASC, p.`id-siege` ASC";
+                                                        $query_list .= " ORDER BY a.date_depart DESC, p.`id-table`, p.`id-siege`, m.pseudo";
 
                                                         $stmt_list = mysqli_prepare($con, $query_list);
 
@@ -1097,92 +1097,35 @@ if ($selected_activity !== null) {
                                                                         // Display Activity Header Row
                                                                         if ($selected_activity === null && $row['id-activite'] !== $current_activity_header) {
                                                                             $formatted_date_header = date("d/m/Y H:i", strtotime($row["date_depart"]));
-                                                                            // Output 13 cells to match header count, avoiding colspan in tbody
-                                                                            echo '<tr class="activity-header">';
-                                                                            echo '  <td style="font-weight: bold; background-color: #e9ecef !important;">Activité: ' . htmlspecialchars($row['titre-activite']) . ' (' . $formatted_date_header . ') - ID: ' . $row['id-activite'] . '</td>'; // Style added to mimic header
-                                                                            for ($i = 0; $i < 12; $i++) { echo '<td style="background-color: #e9ecef !important;"></td>'; } // Add 12 empty styled cells
-                                                                            echo '</tr>';
+                                                                            echo '<tr class="activity-header"><th colspan="13">Activité: ' . htmlspecialchars($row['titre-activite']) . ' (' . $formatted_date_header . ') - ID: ' . $row['id-activite'] . '</th></tr>';
                                                                             $current_activity_header = $row['id-activite'];
                                                                         }
 
                                                                         // Display Data Row
-                                                                        // Prepare raw numeric values for data-sort attributes
-                                                                        $raw_activite_buyin = floatval($row['activite_buyin'] ?? 0.0);
-                                                                        $raw_participation_rake = floatval($row['participation_rake'] ?? 0.0);
-                                                                        $raw_cout_in = floatval($row['cout_in'] ?? 0.0);
-                                                                        $raw_recave = intval($row['recave'] ?? 0);
-                                                                        $raw_classement = ($row['classement'] === null || $row['classement'] === '') ? 9999 : intval($row['classement']); // Use a high number for null/empty classement for sorting purposes
-                                                                        $raw_tf = intval($row['tf'] ?? 0); // Sort 0/1
-                                                                        $raw_points = intval($row['points'] ?? 0);
-                                                                        $raw_cagnotte = intval($row['cagnotte'] ?? 0);
-
                                                                         echo "<tr>";
-                                                                        // Column 0: Ch. (Checkbox - now sortable using hidden span)
-                                                                        $challenger_sort_value = $row['challenger'] ? 1 : 0;
-                                                                        echo "<td class='cell-center'><span class='sort-value' style='display: none;'>" . $challenger_sort_value . "</span><input type='checkbox' name='participations[$index][challenger]' value='1' " . ($row['challenger'] ? 'checked' : '') . ($selected_activity ? '' : ' disabled') . "></td>";
-                                                                        // Column 1: Joueur (Text - default sorting)
-                                                                        // Removed data-sort attribute
+                                                                        echo "<td class='cell-center'><input type='checkbox' name='participations[$index][challenger]' value='1' " . ($row['challenger'] ? 'checked' : '') . ($selected_activity ? '' : ' disabled') . "></td>";
                                                                         echo "<td title='" . htmlspecialchars($row['pseudo']) . "'>" . htmlspecialchars(substr($row['pseudo'], 0, 15)) . (strlen($row['pseudo']) > 15 ? '...' : '')
                                                                              . "<input type='hidden' name='participations[$index][membre_id]' value='" . htmlspecialchars($row['id-membre']) . "'>"
                                                                              . "<input type='hidden' name='participations[$index][activite_id]' value='" . htmlspecialchars($row['id-activite']) . "'></td>";
-                                                                        // Column 2: T (Dropdown 1-11)
-                                                                        echo "<td class='cell-center'><span class='sort-value' style='display: none;'>" . $row['id-table'] . "</span>";
-                                                                        echo "<select name='participations[$index][table]' " . ($selected_activity ? '' : 'disabled') . ">";
-                                                                        for ($t = 1; $t <= 11; $t++) {
-                                                                            echo "<option value='$t' " . ($row['id-table'] == $t ? 'selected' : '') . ">$t</option>";
-                                                                        }
-                                                                        echo "</select></td>";
-                                                                        
-                                                                        // Column 3: S (Dropdown 1-11)
-                                                                        echo "<td class='cell-center'><span class='sort-value' style='display: none;'>" . $row['id-siege'] . "</span>";
-                                                                        echo "<select name='participations[$index][siege]' " . ($selected_activity ? '' : 'disabled') . ">";
-                                                                        for ($s = 1; $s <= 11; $s++) {
-                                                                            echo "<option value='$s' " . ($row['id-siege'] == $s ? 'selected' : '') . ">$s</option>";
-                                                                        }
-                                                                        echo "</select></td>";
-                                                                        
-                                                                        // Column 4: Buy-in Act. (Readonly Input - numeric sort using hidden span with class)
-                                                                        echo "<td class='cell-right'><span class='sort-value' style='display: none;'>" . $raw_activite_buyin . "</span><input type='number' name='participations[$index][buyin_display]' value='" . htmlspecialchars(number_format($raw_activite_buyin, 2, '.', '')) . "' step='0.01' readonly title='Buy-in Activité'></td>";
-                                                                        
-                                                                        // Column 5: Bounty (Readonly Input - numeric sort using hidden span with class)
-                                                                        $raw_bounty = floatval($row['bounty'] ?? 0.0);
-                                                                        $total_bounty += $raw_bounty; // Accumulate bounty total
-                                                                        echo "<td class='cell-right'><span class='sort-value' style='display: none;'>" . $raw_bounty . "</span><input type='number' name='participations[$index][bounty_display]' value='" . htmlspecialchars(number_format($raw_bounty, 2, '.', '')) . "' step='0.01' readonly title='Bounty'></td>";
-                                                                        
-                                                                        // Column 6: Rake Part. (Dropdown with specific values)
-                                                                        echo "<td class='cell-right'><span class='sort-value' style='display: none;'>" . $raw_participation_rake . "</span>";
-                                                                        echo "<select name='participations[$index][rake]' " . ($selected_activity ? '' : 'disabled') . ">";
-                                                                        $rake_values = [0, 5, 10, 12, 15, 20];
-                                                                        foreach ($rake_values as $value) {
-                                                                            $selected = (abs($raw_participation_rake - $value) < 0.01) ? 'selected' : '';
-                                                                            echo "<option value='$value' $selected>$value</option>";
-                                                                        }
-                                                                        echo "</select></td>";
-                                                                        // Column 7: Cout In (Readonly Input - numeric sort using hidden span with class)
-                                                                        echo "<td class='cell-right'><span class='sort-value' style='display: none;'>" . $raw_cout_in . "</span><input type='number' name='participations[$index][cout_in_display]' value='" . htmlspecialchars(number_format($raw_cout_in, 2, '.', '')) . "' step='0.01' readonly title='onne
-                                                                         (BuyIn Act.+Rake Part.[+5 si Ch])'></td>";
-                                                                        // Column 7: Rec. (Dropdown - numeric sort using hidden span with class)
-                                                                        echo "<td class='cell-right'><span class='sort-value' style='display: none;'>" . $raw_recave . "</span>";
-                                                                        echo "<select class='recave-select' name='participations[$index][recave]' " . ($selected_activity ? '' : 'disabled') . ">";
-                                                                        for ($v = 0; $v <= 4; $v++) {
-                                                                            echo "<option value='$v' " . ($raw_recave == $v ? 'selected' : '') . ">$v</option>";
-                                                                        }
-                                                                        echo "</select></td>";
-                                                                        // Column 8: Clas. (Input - numeric sort using hidden span with class, handle null/empty)
-                                                                        echo "<td class='cell-center'><span class='sort-value' style='display: none;'>" . $raw_classement . "</span><select name='participations[$index][classement]' " . ($selected_activity ? '' : 'disabled') . "><option value=''>N/A</option>";
-                                                                        for ($c = 0; $c <= 50; $c++) {
-                                                                            $selected = ($row['classement'] !== null && $row['classement'] == $c) ? 'selected' : '';
-                                                                            echo "<option value='$c' $selected>$c</option>";
-                                                                        }
-                                                                        echo "</select></td>";
-                                                                        // Column 9: TF (Checkbox - numeric sort using hidden span with class 0/1)
-                                                                        echo "<td class='cell-center'><span class='sort-value' style='display: none;'>" . $raw_tf . "</span><input type='checkbox' name='participations[$index][tf]' value='1' " . ($row['tf'] ? 'checked' : '') . ($selected_activity ? '' : ' disabled') . "></td>";
-                                                                        // Column 10: Pts (Readonly Input - numeric sort using hidden span with class)
-                                                                        echo "<td class='cell-right'><span class='sort-value' style='display: none;'>" . $raw_points . "</span><input type='number' name='participations[$index][points_display]' value='" . htmlspecialchars((string)$raw_points) . "' step='1' placeholder='0' readonly title='Calc: 0 si non Ch, sinon 1+TF(+1)+Clas1(+1)'></td>";
-                                                                        // Column 11: Cagnotte (Readonly Input - numeric sort using hidden span with class)
-                                        $remise_checked = $row['remise'] ? 'checked' : '';
-                                        echo "<td class='cell-center'><span class='sort-value' style='display: none;'>" . $row['remise'] . "</span><input type='checkbox' name='participations[$index][remise]' value='1' $remise_checked " . ($selected_activity ? '' : ' disabled') . "></td>";
-                                        echo "<td class='cell-center'><span class='sort-value' style='display: none;'>" . $raw_cagnotte . "</span><input type='number' name='participations[$index][cagnotte_display]' value='" . htmlspecialchars((string)$raw_cagnotte) . "' step='1' placeholder='0' readonly title='Calc: Si Ch.=(Recave*3)+3, sinon 0'></td>";
+                                                                        echo "<td class='cell-center'><input type='number' name='participations[$index][table]' value='" . htmlspecialchars((string)$row['id-table']) . "' min='1' max='9' " . ($selected_activity ? '' : 'readonly') . "></td>"; // Max changed to 9
+                                                                        echo "<td class='cell-center'><input type='number' name='participations[$index][siege]' value='" . htmlspecialchars((string)$row['id-siege']) . "' min='1' max='10' " . ($selected_activity ? '' : 'readonly') . "></td>"; // Max remains 10
+                                                                        echo "<td class='cell-right'><input type='number' name='participations[$index][buyin_display]' value='" . htmlspecialchars(number_format((float)($row['activite_buyin'] ?? 0.0), 2, '.', '')) . "' step='0.01' readonly title='Buy-in Activité'></td>";
+                                                                        echo "<td class='cell-right'><input type='number' name='participations[$index][rake]' value='" . htmlspecialchars(number_format((float)($row['participation_rake'] ?? 0.0), 2, '.', '')) . "' step='0.01' placeholder='0.00' " . ($selected_activity ? '' : 'readonly') . "></td>";
+                                                                        echo "<td class='cell-right'><input type='number' name='participations[$index][cout_in_display]' value='" . htmlspecialchars(number_format((float)($row['cout_in'] ?? 0.0), 2, '.', '')) . "' step='0.01' readonly title='Coût Total (BuyIn Act.+Rake Part.[+5 si Ch])'></td>";
+                                                                        echo "<td class='cell-right'><input type='number' name='participations[$index][recave]' value='" . htmlspecialchars((string)$row['recave']) . "' step='1' min='0' max='4' placeholder='0' " . ($selected_activity ? '' : 'readonly') . "></td>"; // Max added 4
+                                                                        echo "<td class='cell-center'><input type='number' name='participations[$index][classement]' value='" . htmlspecialchars((string)$row['classement']) . "' min='0' placeholder='N/A' " . ($selected_activity ? '' : 'readonly') . "></td>";
+                                                                        echo "<td class='cell-center'><input type='checkbox' name='participations[$index][tf]' value='1' " . ($row['tf'] ? 'checked' : '') . ($selected_activity ? '' : ' disabled') . "></td>";
+                                                                        echo "<td class='cell-right'><input type='number' name='participations[$index][points_display]' value='" . htmlspecialchars((string)$row['points']) . "' step='1' placeholder='0' readonly title='Calc: 0 si non Ch, sinon 1+TF(+1)+Clas1(+1)'></td>";
+                                                                        echo "<td class='cell-right'><input type='number' name='participations[$index][cagnotte_display]' value='" . htmlspecialchars((string)$row['cagnotte']) . "' step='1' placeholder='0' readonly title='Calc: Si Ch.=(Recave*3)+3, sinon 0'></td>";
+                                                                        echo "<td class='cell-center'>
+                                                                                <form method='post' style='display:inline; margin:0; padding:0;' onsubmit='return confirm(\"Êtes-vous sûr de vouloir supprimer ce participant ?\");'>
+                                                                                    <input type='hidden' name='membre_id' value='" . htmlspecialchars($row['id-membre']) . "'>
+                                                                                    <input type='hidden' name='activite_id' value='" . htmlspecialchars($row['id-activite']) . "'>
+                                                                                    <button type='submit' name='delete_participant' class='btn btn-delete' title='Supprimer ce participant'>
+                                                                                        &times;
+                                                                                    </button>
+                                                                                </form>
+                                                                            </td>";
                                                                         echo "</tr>";
                                                                         $index++;
                                                                     }
@@ -1191,36 +1134,20 @@ if ($selected_activity !== null) {
                                                                 }
                                                                 mysqli_free_result($result);
                                                             } else {
-                                                                 // Output 13 cells for error message
-                                                                 echo '<tr>';
-                                                                 echo '  <td><div class="alert alert-danger" style="margin-bottom: 0;">Erreur execution requête liste: ' . htmlspecialchars(mysqli_stmt_error($stmt_list)) . '</div></td>';
-                                                                 for ($i = 0; $i < 12; $i++) { echo '<td></td>'; }
-                                                                 echo '</tr>';
+                                                                 echo "<tr><td colspan='13' class='alert alert-danger'>Erreur execution requête liste: " . htmlspecialchars(mysqli_stmt_error($stmt_list)) . "</td></tr>";
                                                                  $data_found = false;
                                                             }
                                                             mysqli_stmt_close($stmt_list);
                                                         } else {
-                                                             // Output 13 cells for error message
-                                                             echo '<tr>';
-                                                             echo '  <td><div class="alert alert-danger" style="margin-bottom: 0;">Erreur préparation requête liste: ' . htmlspecialchars(mysqli_error($con)) . '</div></td>';
-                                                             for ($i = 0; $i < 12; $i++) { echo '<td></td>'; }
-                                                             echo '</tr>';
+                                                             echo "<tr><td colspan='13' class='alert alert-danger'>Erreur préparation requête liste: " . htmlspecialchars(mysqli_error($con)) . "</td></tr>";
                                                              $data_found = false;
                                                         }
 
                                                         // Display info messages or no data message
                                                         if (!$data_found) {
-                                                             // Output 13 cells to match header count
-                                                             echo '<tr>';
-                                                             echo '  <td style="text-align: center; padding: 1.5rem;">Aucun participant trouvé pour ' . ($selected_activity ? "l'activité sélectionnée." : "les activités à venir.") . '</td>';
-                                                             for ($i = 0; $i < 12; $i++) { echo '<td></td>'; } // Add 12 empty cells
-                                                             echo '</tr>';
+                                                             echo "<tr><td colspan='13' style='text-align: center; padding: 1.5rem;'>Aucun participant trouvé pour " . ($selected_activity ? "l'activité sélectionnée." : "les activités à venir.") . "</td></tr>";
                                                         } elseif (!$selected_activity && $data_found) {
-                                                             // Output 13 cells, place alert in the first one
-                                                             echo '<tr>';
-                                                             echo '  <td><div class="alert alert-info" style="margin-top: 1rem; text-align: center; margin-bottom: 0;">Filtrez par une activité pour activer la modification groupée.</div></td>';
-                                                             for ($i = 0; $i < 12; $i++) { echo '<td></td>'; } // Add 12 empty cells
-                                                             echo '</tr>';
+                                                             echo '<tr><td colspan="13"><div class="alert alert-info" style="margin-top: 1rem; text-align: center;">Filtrez par une activité pour activer la modification groupée.</div></td></tr>';
                                                         }
                                                         ?>
                                                     </tbody>
@@ -1231,15 +1158,13 @@ if ($selected_activity !== null) {
                                                              <td>Total (<?php echo $participants_in_list; ?>):</td>
                                                              <td colspan="2"></td> 
                                                              <td class="cell-right"><?php echo number_format($total_buyin_activite, 2, '.', ' '); ?></td>
-                                                             <td class="cell-right"><?php echo number_format($total_bounty, 2, '.', ' '); ?></td>
                                                              <td class="cell-right"><?php echo number_format($total_rake_participation, 2, '.', ' '); ?></td>
                                                              <td class="cell-right"><?php echo number_format($total_cout_in, 2, '.', ' '); ?></td>
                                                              <td class="cell-right"><?php echo $total_recave; ?></td>
-                                                             <td></td>
-                                                             <td colspan="1"></td>  
-                                                             <td></td>
-                                                             <td class="cell-center">0</td>
-                                                             <td class="cell-right"><?php echo "C = C + ".$total_cagnotte; ?></td>
+                                                             <td colspan="2"></td> 
+                                                             <td></td> 
+                                                             <td class="cell-right"><?php echo $total_cagnotte; ?></td>
+                                                             <td></td> 
                                                          </tr>
                                                          <?php if ($selected_activity): // Show Update button only if activity is selected ?>
                                                          <tr >
@@ -1415,40 +1340,24 @@ if ($selected_activity !== null) {
             Main.init();
             FormElements.init();
 
-            // Initialize DataTables ONLY if a single activity is selected
-            // Check if the table exists AND if we are NOT in the 'All Activities' view
-            if ($('.data-table').length > 0 && !isAllActivitiesView) {
-                // Initialize DataTables with sorting enabled, relying on data-sort attributes
-                 $('.data-table').DataTable({
-                    "paging": false, // Disable pagination
-                    "info": false,   // Disable info text
+            // Initialize DataTables
+            // Check if the table exists before initializing
+            if ($('.data-table').length > 0) {
+                $('.data-table').DataTable({
+                    "paging": false, // Disable pagination to keep form submission simple
+                    "info": false,   // Disable "Showing x of y entries"
                     "language": {
                         "search": "Rechercher Joueur:",
                         "zeroRecords": "Aucun joueur trouvé",
                         "emptyTable": "Aucune participation à afficher"
+                        // Add other translations if needed
                     },
-                    "ordering": true, // Keep sorting enabled
+                     // Disable sorting on the action column
                     "columnDefs": [
-                        // Disable sorting for specific columns
-                        { "orderable": false, "targets": [0, 2, 3] },
-                        // Define orthogonal data rendering for numeric columns (4-10)
-                        // Use the hidden span's text for sorting and type detection
-                        {
-                            "targets": [4, 5, 6, 7, 8, 9, 10], // Columns with hidden spans
-                            "render": function ( data, type, row ) {
-                                if ( type === 'sort' || type === 'type' ) {
-                                    // Find the hidden span and return its text content
-                                    var hiddenValue = $(data).find('.sort-value').text();
-                                    // Convert to number for correct numeric sorting
-                                    return Number(hiddenValue);
-                                }
-                                // For display and other types, return the original cell data (which includes the input)
-                                return data;
-                            }
-                        }
+                        { "orderable": false, "targets": [0, 2, 3, 12] } // Disable sorting for Ch., T, S, Action
                     ],
-                    // Default sort: Challenger DESC (col 0), then Player Name ASC (col 1)
-                    "order": [[ 0, "desc" ], [ 1, "asc" ]]
+                    // Default sort by Player name (column index 1) ascending
+                    "order": [[ 1, "asc" ]]
                 });
             }
 
@@ -1490,22 +1399,6 @@ if ($selected_activity !== null) {
                      siegeSelect.innerHTML = '<option value="">-- Aucun siège libre --</option>';
                  }
             }
-
-            // Update recave select styling when challenger checkbox changes
-            $(document).on('change', 'input[name^="participations["][name$="[challenger]"]', function() {
-                const recaveSelect = $(this).closest('tr').find('.recave-select');
-                if (this.checked) {
-                    recaveSelect.css({'color': 'blue', 'font-weight': 'bold'});
-                } else {
-                    recaveSelect.css({'color': '', 'font-weight': ''});
-                }
-            });
-
-            // Apply initial styling
-            $('input[name^="participations["][name$="[challenger]"]:checked').each(function() {
-                $(this).closest('tr').find('.recave-select')
-                    .css({'color': 'blue', 'font-weight': 'bold'});
-            });
 
             // Event listener for table selection change
             if (tableSelect) {

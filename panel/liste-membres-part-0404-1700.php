@@ -174,25 +174,12 @@ if (strlen($_SESSION['id']) == 0) {
         <?php include('include/sidebar.php'); ?>
         <div class="app-content">
             <?php include('include/header.php'); ?>
-            <!-- start: MAIN CONTAINER -->
             <div class="main-content">
                 <div class="wrap-content container" id="container">
-                    <!-- start: PAGE TITLE -->
-                    <section id="page-title">
-                        <div class="row">
-                            <div class="col-sm-8">
-                                <h1 class="mainTitle">Admin | Liste des Participants</h1>
-                            </div>
-                            <ol class="breadcrumb">
-                                <li><span>Admin</span></li>
-                                <li class="active"><span>Liste Participants</span></li>
-                            </ol>
-                        </div>
-                    </section>
-                    <!-- end: PAGE TITLE -->
                     <div class="container-fluid container-fullw bg-white">
                         <div class="row">
                             <div class="col-md-12">
+                                <h4 class="mt-4 mb-4">Liste des Participants</h4>
                                 
                                 <form method="post" class="mb-4">
                                     <div class="d-flex align-items-center">
@@ -273,7 +260,6 @@ if (strlen($_SESSION['id']) == 0) {
             </div>
         </div>
         <?php include('include/footer.php'); ?>
-        <?php include('include/setting.php'); ?>
     </div>
 
     <script src="vendor/jquery/jquery.min.js"></script>
@@ -292,22 +278,6 @@ if (strlen($_SESSION['id']) == 0) {
     <script src="vendor/bootstrap-timepicker/bootstrap-timepicker.min.js"></script>
     <script src="assets/js/main.js"></script>
     <script src="assets/js/form-elements.js"></script>
-    <script src="vendor/switchery/switchery.min.js"></script>
-    <script>
-        jQuery(document).ready(function() {
-            // Initialiser les switches de thème
-            var elems = Array.prototype.slice.call(document.querySelectorAll('.js-switch'));
-            elems.forEach(function(html) {
-                var switchery = new Switchery(html, {
-                    color: '#1a2a3a',
-                    secondaryColor: '#dfdfdf',
-                    jackColor: '#fff',
-                    jackSecondaryColor: null,
-                    size: 'small'
-                });
-            });
-        });
-    </script>
     <script>
     jQuery(document).ready(function() {
         // Activer le toggle de la sidebar
