@@ -1,4 +1,4 @@
-<?php
+de trier les colonnes de la liste des pa<?php
 session_start();
 // --- ENABLE ERROR REPORTING FOR DEBUGGING ---
 // ini_set('display_errors', 1);
@@ -34,23 +34,17 @@ if (isset($_POST['submitcreaj'])) {
     $pseudo = trim($_POST['pseudo']);
     $fname = trim($_POST['fname']);
     if (!empty($pseudo)) {
-        // Check if pseudo already exists
-        $check_pseudo_sql = "SELECT `id-membre` FROM `membres` WHERE LOWER(`pseudo`) = LOWER(?)";
-        $stmt_check = mysqli_prepare($con, $check_pseudo_sql);
-        if ($stmt_check) {
-            mysqli_stmt_bind_param($stmt_check, "s", $pseudo);
-            if (mysqli_stmt_execute($stmt_check)) {
-                mysqli_stmt_store_result($stmt_check);
-                if (mysqli_stmt_num_rows($stmt_check) > 0) {
-                    $_SESSION['feedback'] = "<div class='alert alert-warning'>Le pseudo '" . htmlspecialchars($pseudo) . "' existe déjà.</div>";
-                } else {
-                    // Pseudo doesn't exist, proceed with creation
-                }
-            }
-        }
-    } else {
-        $_SESSION['feedback'] = "<div class='alert alert-warning'>Le pseudo est requis pour la création rapide.</div>";
-    }
+        $sql_create_player = "INSERT INTO `membres` (`pseudo`, `fname`) VALUES (?, ?)";
+        $stmt_create = mysqli_prepare($con, $sql_create_player);
+        if ($stmt_create) {
+            mysqli_stmt_bind_param($stmt_create, "ss", $pseudo, $fname);
+            if (mysqli_stmt_execute($stmt_create)) {
+                $new_player_id = mysqli_insert_id($con);
+                $_SESSION['feedback'] = "<div class='alert alert-success'>Joueur rapide créé : Pseudo = " . htmlspecialchars($pseudo) . ", Prénom = " . htmlspecialchars($fname) . " (ID: $new_player_id)</div>";
+            } else { $_SESSION['feedback'] = "<div class='alert alert-danger'>Erreur création joueur rapide: " . htmlspecialchars(mysqli_stmt_error($stmt_create)) . "</div>"; }
+            mysqli_stmt_close($stmt_create);
+        } else { $_SESSION['feedback'] = "<div class='alert alert-danger'>Erreur préparation création joueur: " . htmlspecialchars(mysqli_error($con)) . "</div>"; }
+    } else { $_SESSION['feedback'] = "<div class='alert alert-warning'>Le pseudo est requis pour la création rapide.</div>"; }
     header("Location: " . $_SERVER['PHP_SELF']);
     exit;
 }
@@ -333,11 +327,421 @@ if ($selected_activity !== null) {
     <!-- DataTables CSS -->
     <link href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" rel="stylesheet" />
     <!-- <link href="https://cdn.jsdelivr.net/npm/simple-datatables@latest/dist/style.css" rel="stylesheet" /> -->
-    <link rel="stylesheet" href="quick-part-style.css">
+
     <!-- Specific CSS from original quick-part.php -->
     <style>
         /* --- Paste the full responsive CSS from original quick-part.php --- */
-        
+        :root {
+            --primary-color: #ff6b2b; /* Orange */
+            --primary-hover: #ff8651;
+            --background: #f5f7fa;    /* Light grey */
+            --card-bg: #ffffff;       /* White */
+            --text-color: #2d3748;    /* Dark grey/blue */
+            --border-color: #e2e8f0;   /* Light grey border */
+            --danger-color: #dc3545;   /* Red */
+            --danger-border: #dc3545;
+            --readonly-bg: #e9ecef;    /* Background for readonly inputs */
+            --total-row-bg: #e9f5ff; /* Light blue for total row */
+        }
+
+        /* Apply background to body *within* the theme structure */
+        .main-content .container-fullw {
+             background-color: var(--background) !important; /* Override theme white */
+        }
+
+        /* Keep body font, but theme might override */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+            color: var(--text-color);
+            line-height: 1.6;
+            font-size: 16px; /* Base size */
+        }
+
+        /* Adjust container padding within theme */
+        .wrap-content.container {
+            max-width: 1400px; /* Slightly wider for totals */
+            margin: 1.5rem auto;
+            padding: 0 1rem; /* Use theme's container padding */
+        }
+
+        /* Use theme's panel/card styling as base, but apply specific overrides */
+        .panel.panel-white, .card { /* Target both theme panel and bootstrap card */
+            background: var(--card-bg) !important; /* Ensure white background */
+            border-radius: 10px !important;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04),
+                        0 1px 2px rgba(0, 0, 0, 0.06) !important;
+            padding: 1.5rem !important;
+            margin-bottom: 1.5rem !important;
+            border: none !important; /* Remove theme borders if any */
+        }
+        .panel-body {
+             padding: 0 !important; /* Remove default panel-body padding */
+        }
+
+
+        h2 { /* Style section titles */
+            margin-top: 0;
+            margin-bottom: 1.2rem;
+            color: var(--text-color);
+            font-size: 1.3rem;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.6rem;
+        }
+
+        /* Form Controls - Adapt to theme but keep specific styles */
+        .form-control {
+            display: block;
+            width: 100%;
+            padding: 0.7rem 1rem !important; /* Use specific padding */
+            border: 1px solid var(--border-color) !important;
+            border-radius: 6px !important;
+            margin: 0.2rem 0;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            font-size: 1rem !important; /* Use specific font size */
+            box-sizing: border-box;
+            background-color: #fff !important;
+            color: var(--text-color) !important;
+            height: auto !important; /* Override theme height */
+            box-shadow: none !important; /* Override theme shadow */
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color) !important;
+            box-shadow: 0 0 0 3px rgba(255, 107, 43, 0.15) !important;
+        }
+
+        select.form-control {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23555' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.8rem center;
+            background-size: 16px 16px;
+            padding-right: 2.5rem !important;
+        }
+
+        input:read-only,
+        .form-control:disabled {
+            background-color: var(--readonly-bg) !important;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        /* Buttons - Adapt to theme but keep specific styles */
+        .btn {
+            padding: 0.7rem 1.4rem !important;
+            border: none !important;
+            border-radius: 6px !important;
+            cursor: pointer;
+            font-weight: 600 !important;
+            font-size: 0.9rem !important;
+            transition: all 0.2s ease;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px;
+            display: inline-block;
+            text-align: center;
+            vertical-align: middle;
+            line-height: 1.5 !important;
+            box-shadow: none !important; /* Override theme shadow */
+        }
+
+        .btn-primary-orange2 { /* Custom button class */
+            background: var(--primary-color) !important;
+            color: white !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary-orange2:hover,
+        .btn-primary-orange2:focus {
+            background: var(--primary-hover) !important;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+            outline: none;
+        }
+
+        .btn-block {
+            width: 100%;
+            display: block;
+        }
+
+        .btn-delete { /* Specific delete button */
+            background-color: transparent !important;
+            border: none;
+            color: var(--danger-color) !important;
+            padding: 0.3rem 0.5rem !important;
+            font-size: 1.1rem !important;
+            min-width: auto;
+            line-height: 1 !important;
+            font-weight: bold !important;
+            text-transform: none !important; /* Override uppercase */
+            letter-spacing: normal !important; /* Override spacing */
+        }
+        .btn-delete:hover,
+        .btn-delete:focus {
+            color: #a02430 !important;
+            background-color: rgba(220, 53, 69, 0.1) !important;
+            outline: none;
+            transform: none !important; /* Override hover transform */
+            box-shadow: none !important; /* Override hover shadow */
+        }
+
+        /* Simple Form Table (for quick add/delete forms) */
+        .simple-form-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 0; /* Remove margin inside card */
+        }
+        .simple-form-table th,
+        .simple-form-table td {
+            padding: 0.5rem 0.2rem;
+            text-align: left;
+            vertical-align: middle;
+            border: none;
+        }
+        .simple-form-table th {
+            width: 120px;
+            font-weight: 600;
+            padding-right: 1rem;
+            white-space: nowrap;
+        }
+        .simple-form-table .btn-container-cell {
+            padding-top: 0.8rem;
+        }
+         .simple-form-table .btn-container {
+            display: flex;
+            justify-content: flex-end;
+         }
+
+        /* Main Data Table Styles */
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .data-table { /* Target the specific table class */
+            width: 100%;
+            min-width: 1200px;
+            border-collapse: collapse;
+            background: white;
+            font-size: 0.9rem;
+            margin-bottom: 0; /* Remove default table margin */
+        }
+
+        .data-table thead th {
+            background: var(--primary-color) !important; /* Orange header */
+            color: white !important;
+            font-weight: 600 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px;
+            font-size: 0.8rem !important;
+            padding: 0.8rem 0.8rem !important;
+            text-align: left;
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            border-bottom: 2px solid var(--primary-hover) !important;
+        }
+         .data-table .activity-header th { /* Specific header for activity rows */
+            background-color: #e9ecef !important;
+            color: var(--text-color) !important;
+            text-align: left;
+            font-weight: bold !important;
+            padding: 0.6rem 0.8rem !important;
+            position: sticky;
+            top: 40px; /* Adjust based on main header height */
+            z-index: 9;
+            border-bottom: 1px solid var(--border-color) !important;
+            border-top: 1px solid var(--border-color) !important;
+            text-transform: none !important; /* Override uppercase */
+         }
+
+        .data-table tbody tr:nth-child(even) {
+            background: rgba(0, 0, 0, 0.015);
+        }
+
+        .data-table tbody tr:hover {
+            background: rgba(255, 107, 43, 0.05);
+        }
+
+        .data-table td {
+            padding: 0.6rem 0.8rem !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+         .data-table td.cell-center,
+         .data-table th.cell-center {
+             text-align: center;
+         }
+         .data-table td.cell-right,
+         .data-table th.cell-right {
+            text-align: right;
+         }
+
+
+        .data-table input[type="number"],
+        .data-table input[type="text"] { /* Inputs within the main table */
+            min-width: 60px;
+            width: auto;
+            max-width: 85px;
+            padding: 0.4rem 0.5rem !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 4px !important;
+            box-sizing: border-box;
+            font-size: 0.9rem !important;
+            text-align: right;
+            height: auto !important;
+            box-shadow: none !important;
+            background-color: #fff !important;
+            color: var(--text-color) !important;
+        }
+        .data-table input[type="checkbox"] {
+            margin: 0 auto;
+            display: block;
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+        .data-table input:read-only {
+            background-color: var(--readonly-bg) !important;
+            border-color: var(--border-color) !important;
+            opacity: 0.8;
+            cursor: default;
+        }
+        .data-table input:disabled,
+        .data-table input[type="checkbox"]:disabled {
+             cursor: not-allowed;
+             opacity: 0.5;
+        }
+
+        /* Footer and Total Row */
+        .data-table tfoot td {
+             padding: 1rem !important;
+             text-align: right;
+             border-top: 2px solid var(--primary-color) !important;
+             background-color: #f8f9fa !important;
+             font-weight: bold !important;
+        }
+        .data-table tfoot tr.total-row td {
+             background-color: var(--total-row-bg) !important;
+             font-weight: bold !important;
+             color: var(--text-color) !important;
+             border-top: 2px solid var(--primary-color) !important;
+             padding: 0.8rem 0.8rem !important;
+             text-align: center; /* Center align all total cells by default */
+        }
+         .data-table tfoot tr.total-row td:nth-child(2) { /* Target the 'Total (x):' cell */
+            text-align: left; /* Align Total label left */
+            font-weight: bold;
+         }
+         /* Right align specific total cells */
+         .data-table tfoot tr.total-row td:nth-child(5), /* Buyin Act */
+         .data-table tfoot tr.total-row td:nth-child(6), /* Rake Part */
+         .data-table tfoot tr.total-row td:nth-child(7), /* Cout In */
+         .data-table tfoot tr.total-row td:nth-child(8), /* Recave */
+         .data-table tfoot tr.total-row td:nth-child(12) { /* Cagnotte */
+             text-align: right;
+         }
+         /* Styling for the update button cell in footer */
+         .data-table tfoot td.update-button-cell {
+             background-color: #f8f9fa !important; /* Match default footer background */
+             text-align: right;
+             padding: 1rem !important;
+         }
+
+
+        /* Alerts - Use theme's alert styles if possible, or keep these */
+        .alert {
+            padding: 12px 15px;
+            margin-bottom: 1.5rem;
+            border: 1px solid transparent;
+            border-radius: 6px !important; /* Use specific radius */
+            font-size: 0.95rem;
+        }
+        .alert-success { color: #0f5132; background-color: #d1e7dd; border-color: #badbcc; }
+        .alert-danger { color: #842029; background-color: #f8d7da; border-color: #f5c2c7; }
+        .alert-warning { color: #664d03; background-color: #fff3cd; border-color: #ffecb5; }
+        .alert-info { color: #055160; background-color: #cff4fc; border-color: #b6effb; }
+
+         /* Price Pool Display */
+        .pricepool-display {
+            text-align: right;
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-top: 1rem;
+            padding: 0.8rem;
+            background-color: var(--total-row-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+
+
+        /* --- Responsive Adjustments --- */
+        @media (max-width: 992px) {
+            .wrap-content.container { max-width: 960px; }
+            .data-table { min-width: 950px; }
+            .simple-form-table th { width: 100px; }
+        }
+
+        @media (max-width: 768px) {
+            body { font-size: 15px; }
+            .wrap-content.container { margin: 1rem auto; padding: 0 0.8rem; }
+            .panel.panel-white, .card { padding: 1rem !important; }
+            h2 { font-size: 1.2rem; }
+
+            .simple-form-table th,
+            .simple-form-table td { display: block; width: 100%; padding: 0.2rem 0; }
+            .simple-form-table th { width: auto; font-weight: 600; margin-top: 0.8rem; padding-right: 0; white-space: normal; }
+            .simple-form-table tr:first-child th { margin-top: 0; }
+            .simple-form-table td { padding-bottom: 0.8rem; }
+
+             .simple-form-table .btn-container-cell { padding-top: 0.8rem; border-top: 1px solid var(--border-color); margin-top: 0.8rem; }
+             .simple-form-table .btn-container { justify-content: center; }
+             .simple-form-table .btn-container .btn { width: 100%; max-width: 300px; }
+
+            .data-table { min-width: 750px; font-size: 0.85rem; }
+            .data-table thead th { padding: 0.7rem 0.6rem !important; font-size: 0.75rem !important; top: 0; }
+            .data-table .activity-header th { padding: 0.5rem 0.6rem !important; top: 36px; }
+            .data-table td { padding: 0.5rem 0.6rem !important; white-space: nowrap; }
+            .data-table input[type="number"], .data-table input[type="text"] { font-size: 0.85rem !important; padding: 0.3rem 0.4rem !important; max-width: 70px; }
+
+            .data-table tfoot td { padding: 0.8rem !important; text-align: center; } /* Center by default */
+            .data-table tfoot tr.total-row td:first-child { text-align: center; }
+            .data-table tfoot tr.total-row td:nth-child(2){ text-align: center; }
+             /* Right align specific totals */
+            .data-table tfoot tr.total-row td:nth-child(5),
+            .data-table tfoot tr.total-row td:nth-child(6),
+            .data-table tfoot tr.total-row td:nth-child(7),
+            .data-table tfoot tr.total-row td:nth-child(8),
+            .data-table tfoot tr.total-row td:nth-child(12) {
+                text-align: right;
+            }
+            .data-table tfoot td.update-button-cell { text-align: center; }
+            .data-table tfoot .btn { width: 100%; max-width: 320px; padding: 0.8rem 1rem !important; }
+            .pricepool-display { text-align: center; font-size: 1rem; }
+        }
+
+        @media (max-width: 576px) {
+            .wrap-content.container { padding: 0 0.5rem; }
+            .panel.panel-white, .card { padding: 0.8rem !important; }
+            h2 { font-size: 1.1rem; padding-bottom: 0.5rem; }
+            .btn { font-size: 0.85rem !important; padding: 0.7rem 1rem !important; }
+
+            .data-table thead th { padding: 0.6rem 0.4rem !important; }
+            .data-table .activity-header th { padding: 0.4rem 0.4rem !important; }
+            .data-table td { padding: 0.4rem 0.4rem !important; }
+            .data-table input[type="number"] { max-width: 60px; }
+            .data-table { min-width: 650px; }
+        }
+        /* Add margin between cards */
+        .card + .card {
+            margin-top: 1.5rem;
+        }
     </style>
 </head>
 <body>
@@ -865,138 +1269,111 @@ if ($selected_activity !== null) {
                                     </div>
                                 </div> <!-- /panel -->
 
-                                <!-- Prize Pool Distribution -->
+                                <!-- Prize Pool Distribution Form -->
                                 <div class="panel panel-white card">
                                     <div class="panel-body">
-                                        <h2>Répartition du Prize Pool</h2>
-                                        <?php if ($selected_activity !== null && $data_found): 
-                                            // Calculate default number of paid players based on total participants
-                                            $default_nb_joueurs_payes = min(ceil($total_participants * 0.3), 8);
-                                            
-                                            // Use posted value if available, otherwise use default
-                                            $nb_joueurs_payes = isset($_POST['nb_joueurs_payes']) ? 
-                                                min(max(1, intval($_POST['nb_joueurs_payes'])), 8) : 
-                                                $default_nb_joueurs_payes;
-                                            ?>
-                                            
-                                            <form method="post" class="mb-3">
-                                                <table class="simple-form-table">
-                                                    <tr>
-                                                        <th>Nombre de Joueurs Payés</th>
-                                                        <td>
-                                                            <select name="nb_joueurs_payes" class="form-control" style="max-width: 100px;">
-                                                                <?php for($i = 1; $i <= 8; $i++): ?>
-                                                                    <option value="<?php echo $i; ?>" <?php echo ($i == $nb_joueurs_payes) ? 'selected' : ''; ?>>
-                                                                        <?php echo $i; ?> jr<?php echo ($i > 1) ? 's' : ''; ?>
-                                                                    </option>
-                                                                <?php endfor; ?>
-                                                            </select>
-                                                        </td>
-                                                        <td class="btn-container-cell">
-                                                            <div class="btn-container">
-                                                                <button type="submit" class="btn btn-primary-orange2">Recalculer</button>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                </table>
-                                            </form>
-
-                                            <?php
-                                            // Define distribution percentages based on number of paid players
-                                            $distributions = [];
-                                            switch($nb_joueurs_payes) {
-                                                case 1: $distributions = [1.00]; break;
-                                                case 2: $distributions
-                                                            $gain_arrondi = ($gain_estime > 0) ? max(5, round($gain_estime / 5) * 5) : 0;
-                                                            ?>
-                                                            <tr>
-                                                                <td class="cell-center"><?php echo ($i + 1); ?></td>
-                                                                <td class="cell-right"><?php echo number_format($distributions[$i] * 100, 1); ?>%</td>
-                                                                <td class="cell-right"><?php echo number_format($gain_arrondi, 2); ?> €</td>
-                                                            </tr>
-                                                        <?php endfor; ?>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        <?php else: ?>
-                                            <div class="alert alert-info">Sélectionnez une activité pour voir la répartition du Prize Pool.</div>
-                                        <?php endif; ?>
+                                        <h2>Distribution du Price Pool</h2>
+                                        <form method="post">
+                                            <table class="simple-form-table">
+                                                <tr>
+                                                    <th>Nombre de joueurs payés</th>
+                                                    <td>
+                                                        <input class="form-control" type="number" id="nb_joueurs_payes" name="nb_joueurs_payes" value="<?php echo isset($_POST['nb_joueurs_payes']) ? htmlspecialchars($_POST['nb_joueurs_payes']) : ($total_participants > 0 ? round($total_participants * 0.25) : 1); ?>" min="1" max="<?php echo $total_participants > 0 ? $total_participants : 1; ?>" <?php echo $selected_activity === null || !$data_found ? 'disabled' : ''; ?>>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <th></th>
+                                                    <td class="btn-container-cell">
+                                                        <div class="btn-container">
+                                                            <button type="submit" class="btn btn-primary-orange2" name="submit_distribution" <?php echo $selected_activity === null || !$data_found ? 'disabled' : ''; ?>>Calculer la distribution</button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </form>
                                     </div>
                                 </div>
 
-                                <!-- Podium Display -->
-<div class="panel panel-white card">
-    <div class="panel-body">
-        <h2>Podium des Joueurs Classés</h2>
-        <?php
-        if ($selected_activity !== null && $data_found) {
-            // Query to get ranked players for the selected activity
-            $podium_query = "
-                SELECT m.pseudo, p.classement, p.challenger, p.tf, p.points 
-                FROM participation p 
-                JOIN membres m ON p.`id-membre` = m.`id-membre` 
-                WHERE p.`id-activite` = ? AND p.classement IS NOT NULL 
-                ORDER BY p.classement ASC";
-            
-            $stmt_podium = mysqli_prepare($con, $podium_query);
-            if ($stmt_podium) {
-                mysqli_stmt_bind_param($stmt_podium, "i", $selected_activity);
-                if (mysqli_stmt_execute($stmt_podium)) {
-                    $podium_result = mysqli_stmt_get_result($stmt_podium);
-                    
-                    if (mysqli_num_rows($podium_result) > 0) {
-                        echo "<div class='table-responsive'>";
-                        echo "<table class='data-table podium-table'>";
-                        echo "<thead>";
-                        echo "<tr>";
-                        echo "<th class='cell-center'>Position</th>";
-                        echo "<th>Joueur</th>";
-                        echo "<th class='cell-center'>Ch.</th>";
-                        echo "<th class='cell-center'>TF</th>";
-                        echo "<th class='cell-right'>Points</th>";
-                        echo "</tr>";
-                        echo "</thead>";
-                        echo "<tbody>";
-                        
-                        $position = 1;
-                        while ($player = mysqli_fetch_assoc($podium_result)) {
-                            $rowClass = '';
-                            switch ($position) {
-                                case 1: $rowClass = 'background-color: #FFD700;'; break; // Gold
-                                case 2: $rowClass = 'background-color: #C0C0C0;'; break; // Silver
-                                case 3: $rowClass = 'background-color: #CD7F32;'; break; // Bronze
-                                default: $rowClass = ($position <= $nb_joueurs_payes) ? 'background-color: #E8F5E9;' : ''; // Light green for paid positions
-                            }
-                            
-                            echo "<tr style='$rowClass'>";
-                            echo "<td class='cell-center'>" . 
-                                ($position == 1 ? '🏆' : $position) . "</td>";
-                            echo "<td>" . htmlspecialchars($player['pseudo']) . "</td>";
-                            echo "<td class='cell-center'>" . ($player['challenger'] ? '✓' : '') . "</td>";
-                            echo "<td class='cell-center'>" . ($player['tf'] ? '✓' : '') . "</td>";
-                            echo "<td class='cell-right'>" . $player['points'] . "</td>";
-                            echo "</tr>";
-                            
-                            $position++;
-                        }
-                        echo "</tbody></table></div>";
-                    } else {
-                        echo "<div class='alert alert-info'>Aucun joueur classé pour cette activité.</div>";
-                    }
-                    mysqli_free_result($podium_result);
-                } else {
-                    echo "<div class='alert alert-danger'>Erreur lors de la récupération du classement: " . htmlspecialchars(mysqli_stmt_error($stmt_podium)) . "</div>";
-                }
-                mysqli_stmt_close($stmt_podium);
-            } else {
-                echo "<div class='alert alert-danger'>Erreur de préparation de la requête: " . htmlspecialchars(mysqli_error($con)) . "</div>";
-            }
-        } else {
-            echo "<div class='alert alert-info'>Sélectionnez une activité pour voir le podium.</div>";
-        }
-        ?>
-    </div>
-</div>
+                                <!-- Prize Pool Distribution Table -->
+                                <div class="panel panel-white card">
+                                    <div class="panel-body">
+                                        <h2>Résultat Distribution</h2>
+                                        <?php
+                                        if (isset($_POST['submit_distribution']) && $selected_activity !== null && $data_found) {
+                                            $nb_joueurs_payes = intval($_POST['nb_joueurs_payes']);
+                                            if ($nb_joueurs_payes > 0 && $nb_joueurs_payes <= $total_participants) {
+                                                $distributions = array();
+                                                // Define distributions based on number of paid players
+                                                switch ($nb_joueurs_payes) {
+                                                    case 1: $distributions = array(1.00); break; // Added case 1
+                                                    case 2: $distributions = array(0.60, 0.40); break;
+                                                    case 3: $distributions = array(0.50, 0.30, 0.20); break;
+                                                    case 4: $distributions = array(0.45, 0.30, 0.15, 0.10); break;
+                                                    case 5: $distributions = array(0.40, 0.27, 0.15, 0.10, 0.08); break;
+                                                    case 6: $distributions = array(0.35, 0.25, 0.15, 0.11, 0.08, 0.06); break;
+                                                    case 7: $distributions = array(0.33, 0.23, 0.15, 0.11, 0.08, 0.06, 0.04); break;
+                                                    case 8: $distributions = array(0.33, 0.23, 0.14, 0.10, 0.07, 0.05, 0.04, 0.04); break;
+                                                    // Add more cases as needed
+                                                    default:
+                                                        // Basic distribution for larger numbers (example: linear decrease)
+                                                        $base_share = 1.0 / $nb_joueurs_payes;
+                                                        for ($i = 0; $i < $nb_joueurs_payes; $i++) {
+                                                            // This is a placeholder, replace with actual desired distribution logic
+                                                            $distributions[] = $base_share;
+                                                        }
+                                                        // Adjust last elements slightly to ensure sum is 1 (due to potential float issues)
+                                                        $current_sum = array_sum($distributions);
+                                                        if (abs($current_sum - 1.0) > 0.0001 && count($distributions) > 0) {
+                                                            $distributions[count($distributions)-1] += (1.0 - $current_sum);
+                                                        }
+                                                        // echo "<div class='alert alert-warning'>Distribution par défaut appliquée pour {$nb_joueurs_payes} joueurs.</div>";
+                                                        break;
+                                                }
+
+
+                                                if (!empty($distributions)) {
+                                                    $total_distribution_check = array_sum($distributions);
+                                                    if (abs($total_distribution_check - 1) > 0.01) { // Increased tolerance slightly
+                                                        echo "<div class='alert alert-danger'>Erreur: La somme des pourcentages de distribution (".number_format($total_distribution_check*100, 2)."%) ne correspond pas à 100%. Vérifiez la logique de distribution.</div>";
+                                                    } else {
+                                                        echo "<div class='table-responsive'>";
+                                                        echo "<table class='data-table'>"; // Use data-table class for consistency
+                                                        echo "<thead><tr><th>Position</th><th>Pourcentage</th><th>Gain Estimé (Arrondi à 5)</th></tr></thead>";
+                                                        echo "<tbody>";
+                                                        $total_gain_distributed = 0;
+                                                        for ($i = 0; $i < count($distributions); $i++) {
+                                                            $pourcentage = $distributions[$i] * 100;
+                                                            $gain_estime_raw = $price_pool * $distributions[$i];
+                                                            // Round to nearest 5, ensuring minimum is 5 if raw > 0
+                                                            $gain_estime_rounded = ($gain_estime_raw > 0) ? max(5, round($gain_estime_raw / 5) * 5) : 0;
+                                                            $total_gain_distributed += $gain_estime_rounded;
+                                                            echo "<tr><td class='cell-center'>" . ($i + 1) . "</td><td class='cell-right'>" . number_format($pourcentage, 2) . "%</td><td class='cell-right'>" . number_format($gain_estime_rounded, 2) . " €</td></tr>";
+                                                        }
+                                                        echo "</tbody>";
+                                                        echo "<tfoot><tr class='total-row'><td colspan='2' style='text-align:right;'>Total Distribué (Arrondi):</td><td class='cell-right'>" . number_format($total_gain_distributed, 2) . " €</td></tr></tfoot>";
+                                                        echo "</table>";
+                                                        echo "</div>";
+                                                        if (abs($total_gain_distributed - $price_pool) > 5) { // Warning if rounding difference is significant
+                                                             echo "<div class='alert alert-warning' style='margin-top:1rem;'>Note: Le total distribué arrondi (".number_format($total_gain_distributed, 2)." €) peut différer légèrement du Price Pool estimé (".number_format($price_pool, 2)." €) en raison de l'arrondi à 5 €.</div>";
+                                                        }
+                                                    }
+                                                } else {
+                                                     echo "<div class='alert alert-warning'>Aucune distribution définie pour {$nb_joueurs_payes} joueurs payés.</div>";
+                                                }
+                                            } else {
+                                                echo "<div class='alert alert-warning'>Nombre de joueurs payés invalide. Veuillez entrer un nombre entre 1 et " . $total_participants . ".</div>";
+                                            }
+                                        } elseif (isset($_POST['submit_distribution']) && $selected_activity === null) {
+                                            echo "<div class='alert alert-info'>Veuillez sélectionner une activité pour calculer la distribution.</div>";
+                                        } elseif (isset($_POST['submit_distribution']) && !$data_found) {
+                                            echo "<div class='alert alert-info'>Aucun participant trouvé pour l'activité sélectionnée, impossible de calculer la distribution.</div>";
+                                        } else {
+                                            echo "<div class='alert alert-info'>Entrez le nombre de joueurs payés et cliquez sur 'Calculer la distribution'.</div>";
+                                        }
+                                        ?>
+                                    </div>
+                                </div>
+
 
                             </div>
                         </div>

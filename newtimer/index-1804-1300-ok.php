@@ -169,10 +169,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     exit;
 }
-
-// Change this line near the top of your file
-$wsHost = "ws://192.168.1.166:8181"; // Use your actual local IP address
-echo "<script>const WS_HOST = '$wsHost';</script>";
 ?>
 <!DOCTYPE html>
 <html>
@@ -620,12 +616,10 @@ echo "<script>const WS_HOST = '$wsHost';</script>";
         font-family: 'Roboto', sans-serif;
         font-weight: bold;
         z-index: 1000;
-        font-size: 24px; /* Taille réduite de 48px à 24px */
+        font-size: 18px; /* Taille réduite */
         position: fixed;
         top: 10px;
         right: 10px;
-        color: white;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
     }
 
     /* Add or update these CSS rules in your style section */
@@ -706,7 +700,7 @@ echo "<script>const WS_HOST = '$wsHost';</script>";
 
         /* Clock adjustment */
         #clock {
-            font-size: 16px; /* Encore plus petit sur mobile */
+            font-size: 18px;
             top: 5px;
             right: 5px;
         }
@@ -734,34 +728,11 @@ echo "<script>const WS_HOST = '$wsHost';</script>";
         width: device-width;
         initial-scale: 1;
     }
-
-    .level-btn {
-        width: 40px;
-        height: 40px;
-        font-size: 24px;
-        padding: 0;
-        border-radius: 50%;
-        background-color: #2196F3;
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-    }
-
-    .level-btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="blind-info" style="display: flex; align-items: center; gap: 10px;">
-            <button class="level-btn" id="prevLevelBtn">-</button>
-            N<span id="level">1</span>
-            <button class="level-btn" id="nextLevelBtn">+</button>
-        </div>
+        <div class="blind-info">Niv: <span id="level">1</span></div>
         <div class="blind-info"><span id="blinds">25/50</span></div> 
         <!-- <div class="blind-info">Ante: <span id="ante">0</span></div> -->
         <div class="timer-display" id="timer">15:00</div>
@@ -854,106 +825,7 @@ echo "<script>const WS_HOST = '$wsHost';</script>";
         let timeLeft = blindLevels[0].duration;
         let timerInterval;
         let isRunning = false;
-        let ws;
-        let isLocalUpdate = false;
-
-        function initWebSocket() {
-            ws = new WebSocket(WS_HOST);
-            
-            ws.onopen = function() {
-                console.log('Connected to WebSocket server');
-            };
-            
-            ws.onmessage = function(event) {
-                const message = JSON.parse(event.data);
-                if (message.type === 'sync') {
-                    syncTimerState(message.data);
-                }
-            };
-            
-            ws.onclose = function() {
-                console.log('Disconnected from WebSocket server');
-                // Try to reconnect in 5 seconds
-                setTimeout(initWebSocket, 5000);
-            };
-        }
-
-        function syncTimerState(state) {
-            if (!isLocalUpdate) {
-                clearInterval(timerInterval);
-                currentLevel = state.currentLevel;
-                timeLeft = state.timeLeft;
-                isRunning = state.isRunning;
-                
-                if (isRunning) {
-                    startTimer(false); // false means don't broadcast
-                }
-                
-                updateDisplay();
-            }
-            isLocalUpdate = false;
-        }
-
-        function saveTimerState() {
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                isLocalUpdate = true;
-                ws.send(JSON.stringify({
-                    type: 'update',
-                    data: {
-                        currentLevel,
-                        timeLeft,
-                        isRunning,
-                        blindLevels
-                    }
-                }));
-            }
-        }
-
-        function startTimer(broadcast = true) {
-            isRunning = true;
-            updateButtonStates();
-            
-            clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                if (timeLeft > 0) {
-                    timeLeft--;
-                    updateDisplay();
-                    if (broadcast) saveTimerState();
-                    if (timeLeft === 30) {
-                        playSound('levelSound');
-                    }
-                } else {
-                    handleLevelEnd();
-                }
-            }, 1000);
-            
-            if (broadcast) saveTimerState();
-        }
-
-        function stopTimer() {
-            clearInterval(timerInterval);
-            timerInterval = null;
-            isRunning = false;
-            const startPauseBtn = document.getElementById('startPauseBtn');
-            startPauseBtn.textContent = 'Start';
-            startPauseBtn.className = 'start-btn';
-            
-            // Enable minute adjustment buttons
-            document.getElementById('minusMinBtn').disabled = false;
-            document.getElementById('plusMinBtn').disabled = false;
-            
-            // Enable level change buttons when timer is stopped
-            updateLevelButtons();
-        }
-
-        function updateButtonStates() {
-            const startPauseBtn = document.getElementById('startPauseBtn');
-            if (startPauseBtn) {
-                startPauseBtn.textContent = isRunning ? 'Pause' : 'Start';
-                startPauseBtn.className = isRunning ? 'pause-btn' : 'start-btn';
-            }
-        }
-
+    
         // Timer functions
         function updateDisplay() {
             const minutes = Math.floor(Math.max(0, timeLeft) / 60);
@@ -978,8 +850,6 @@ echo "<script>const WS_HOST = '$wsHost';</script>";
             // Update minute adjustment buttons state
             document.getElementById('minusMinBtn').disabled = isRunning;
             document.getElementById('plusMinBtn').disabled = isRunning;
-
-            updateLevelButtons();
         }
         
         function initAudio() {
@@ -999,136 +869,113 @@ echo "<script>const WS_HOST = '$wsHost';</script>";
 }
 
         function playSound(soundId) {
-    // Ne jouer le son que pour 'levelSound' (30 secondes restantes et changement de niveau) 
-    // et 'endSound' (fin du tournoi)
-    if (soundId !== 'levelSound' && soundId !== 'endSound') return;
-
     try {
         const sound = document.getElementById(soundId);
         if (sound) {
             sound.currentTime = 0;
-            sound.play().catch(error => console.log('Playback prevented:', error));
+            const playPromise = sound.play();
+            
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    // Playback started successfully
+                }).catch(error => {
+                    console.log('Playback prevented:', error);
+                    // Create a "silent" audio context to unlock audio
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    audioContext.resume().then(() => {
+                        console.log('Audio context resumed');
+                        sound.play().catch(e => console.log('Retry failed:', e));
+                    });
+                });
+            }
         }
     } catch (e) {
         console.log('Sound error:', e);
     }
 }
 
-// Add these functions to your JavaScript code
-function saveTimerState() {
-    const timerState = {
-        currentLevel: currentLevel,
-        timeLeft: timeLeft,
-        isRunning: isRunning,
-        lastUpdate: Date.now()
-    };
-    localStorage.setItem('timerState', JSON.stringify(timerState));
-
-    // Send update to WebSocket server
-    if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({
-            type: 'update',
-            data: timerState
-        }));
-    }
-}
-
-function loadTimerState() {
-    const savedState = localStorage.getItem('timerState');
-    if (savedState) {
-        const state = JSON.parse(savedState);
-        const timePassed = Math.floor((Date.now() - state.lastUpdate) / 1000);
-        
-        currentLevel = state.currentLevel;
-        
-        if (state.isRunning) {
-            timeLeft = Math.max(0, state.timeLeft - timePassed);
-            if (timeLeft > 0) {
-                toggleStartPause(); // Start the timer
+        function startPauseTimer() {
+            const startPauseBtn = document.getElementById('startPauseBtn');
+            if (!isRunning) {
+                isRunning = true;
+                startPauseBtn.textContent = 'Pause';
+                document.getElementById('minusMinBtn').disabled = true;
+                document.getElementById('plusMinBtn').disabled = true;
+                timerInterval = setInterval(() => {
+                    if (timeLeft > 0) {
+                        timeLeft--;
+                        updateDisplay();
+                        // Play warning sound at 30 seconds
+                        if (timeLeft === 30) {
+                            playSound('levelSound');
+                        }
+                    } else {
+                        if (currentLevel < blindLevels.length - 1) {
+                            currentLevel++;
+                            timeLeft = blindLevels[currentLevel].duration;
+                            updateDisplay();
+                            playSound('levelSound'); // Play sound when level changes
+                        } else {
+                            clearInterval(timerInterval);
+                            playSound('endSound'); // Play sound when tournament ends
+                            alert('Tournament finished!');
+                        }
+                    }
+                }, 1000);
+            } else {
+                clearInterval(timerInterval);
+                isRunning = false;
+                startPauseBtn.textContent = 'Start';
+                document.getElementById('minusMinBtn').disabled = false;
+                document.getElementById('plusMinBtn').disabled = false;
             }
-        } else {
-            timeLeft = state.timeLeft;
         }
-        
-        updateDisplay();
-    }
-}
-
-// Modify your toggleStartPause function to save state
-function toggleStartPause() {
-    if (isRunning) {
-        stopTimer();
-    } else {
-        startTimer();
-    }
-    updateLevelButtons();
-    saveTimerState();
-}
-
-function handleLevelEnd() {
-    if (currentLevel < blindLevels.length - 1) {
-        currentLevel++;
-        timeLeft = blindLevels[currentLevel].duration;
-        updateDisplay();
-        playSound('levelSound'); // Garder le son uniquement pour le changement de niveau
-    } else {
-        stopTimer();
-        playSound('endSound'); // Garder le son pour la fin du tournoi
-        alert('Tournament finished!');
-    }
-}
-
-function initWebSocket() {
-    ws = new WebSocket('ws://your-server:8080');
-    
-    ws.onmessage = function(event) {
-        const message = JSON.parse(event.data);
-        if (message.type === 'sync') {
-            syncTimerState(message.data);
-        }
-    };
-
-    ws.onclose = function() {
-        // Try to reconnect in 5 seconds
-        setTimeout(initWebSocket, 5000);
-    };
-}
-
-function syncTimerState(state) {
-    // Only update if we're not the source of the change
-    if (!isLocalUpdate) {
-        currentLevel = state.currentLevel;
-        timeLeft = state.timeLeft;
-        isRunning = state.isRunning;
-        
-        // Update UI
-        updateDisplay();
-        
-        // Update timer state
-        if (isRunning && !timerInterval) {
-            startTimer();
-        } else if (!isRunning && timerInterval) {
-            stopTimer();
-        }
-    }
-}
 
         // Ajouter cette fonction pour basculer l'état et l'apparence du bouton
         function toggleStartPause() {
             const startPauseBtn = document.getElementById('startPauseBtn');
             if (isRunning) {
-                stopTimer();
+                clearInterval(timerInterval);
+                isRunning = false;
+                startPauseBtn.textContent = 'Start';
+                startPauseBtn.className = 'start-btn';
+                document.getElementById('minusMinBtn').disabled = false;
+                document.getElementById('plusMinBtn').disabled = false;
             } else {
-                startTimer();
+                isRunning = true;
+                startPauseBtn.textContent = 'Pause';
+                startPauseBtn.className = 'pause-btn';
+                document.getElementById('minusMinBtn').disabled = true;
+                document.getElementById('plusMinBtn').disabled = true;
+                timerInterval = setInterval(() => {
+                    if (timeLeft > 0) {
+                        timeLeft--;
+                        updateDisplay();
+                        // Play warning sound at 30 seconds
+                        if (timeLeft === 30) {
+                            playSound('levelSound');
+                        }
+                    } else {
+                        if (currentLevel < blindLevels.length - 1) {
+                            currentLevel++;
+                            timeLeft = blindLevels[currentLevel].duration;
+                            updateDisplay();
+                            playSound('levelSound'); // Play sound when level changes
+                        } else {
+                            clearInterval(timerInterval);
+                            playSound('endSound'); // Play sound when tournament ends
+                            alert('Tournament finished!');
+                        }
+                    }
+                }, 1000);
             }
-            updateLevelButtons();
-            saveTimerState();
         }
 
         // Modifier la fonction resetTimer pour mettre à jour le bouton
         function resetTimer() {
             if (confirm("Êtes-vous sûr de vouloir réinitialiser le timer ?")) {
-                stopTimer();
+                clearInterval(timerInterval);
+                isRunning = false;
                 currentLevel = 0;
                 timeLeft = blindLevels[0].duration;
                 updateDisplay();
@@ -1156,30 +1003,6 @@ function syncTimerState(state) {
             // Garde le niveau actuel mais réinitialise le temps
             timeLeft = blindLevels[currentLevel].duration;
             updateDisplay();
-        }
-
-        function changeLevel(direction) {
-            if (!isRunning) {
-                const newLevel = currentLevel + direction;
-                if (newLevel >= 0 && newLevel < blindLevels.length) {
-                    currentLevel = newLevel;
-                    timeLeft = blindLevels[currentLevel].duration;
-                    updateDisplay();
-                    updateLevelButtons();
-                }
-            }
-        }
-
-        function updateLevelButtons() {
-            const prevBtn = document.getElementById('prevLevelBtn');
-            const nextBtn = document.getElementById('nextLevelBtn');
-            
-            if (prevBtn) {
-                prevBtn.disabled = isRunning || currentLevel === 0;
-            }
-            if (nextBtn) {
-                nextBtn.disabled = isRunning || currentLevel === blindLevels.length - 1;
-            }
         }
 
         // Structure management functions
@@ -1390,7 +1213,10 @@ function renderBlindEditor() {
     const startPauseBtn = document.getElementById('startPauseBtn');
     const resetBtn = document.getElementById('resetBtn');
     
-    if (startPauseBtn) startPauseBtn.addEventListener('click', toggleStartPause); // Supprimé initAudio
+    if (startPauseBtn) startPauseBtn.addEventListener('click', () => {
+        initAudio();
+        toggleStartPause();
+    });
     if (resetBtn) resetBtn.addEventListener('click', resetTimer);
 
     // Time adjustment buttons
@@ -1449,36 +1275,10 @@ function renderBlindEditor() {
     
     if (cancelEditBtn) cancelEditBtn.addEventListener('click', hideEditPanel);
 
-    // Initialiser l'audio uniquement pour les sons de niveau et de fin
+    // Initialize audio on first user interaction
     document.addEventListener('click', () => {
-        const levelSound = document.getElementById('levelSound');
-        const endSound = document.getElementById('endSound');
-        if (levelSound) levelSound.load();
-        if (endSound) endSound.load();
+        initAudio();
     }, { once: true });
-
-    // Load saved timer state when page loads
-    loadTimerState();
-    
-    // Add window event listeners for visibility changes
-    document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') {
-            loadTimerState(); // Refresh timer state when tab becomes visible
-        }
-    });
-
-    // Initialize WebSocket connection
-    initWebSocket();
-
-    // Level change buttons
-    const prevLevelBtn = document.getElementById('prevLevelBtn');
-    const nextLevelBtn = document.getElementById('nextLevelBtn');
-    
-    if (prevLevelBtn) prevLevelBtn.addEventListener('click', () => changeLevel(-1));
-    if (nextLevelBtn) nextLevelBtn.addEventListener('click', () => changeLevel(1));
-    
-    // Update initial state of buttons
-    updateLevelButtons();
 });
 
 // Also make sure this function is defined at the top level of your script
@@ -1512,8 +1312,6 @@ function updateDisplay() {
     const plusMinBtn = document.getElementById('plusMinBtn');
     if (minusMinBtn) minusMinBtn.disabled = isRunning;
     if (plusMinBtn) plusMinBtn.disabled = isRunning;
-
-    updateLevelButtons();
 }
 
 function validateStructure(structure) {

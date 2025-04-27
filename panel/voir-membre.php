@@ -1279,12 +1279,12 @@ if (isset($_POST['submit4'])) {
                                                                                                         </tr>
                                                                                                     </thead>
                                                                                                     <tbody>
-                                                                                                        <?php $ret = mysqli_query($con, "SELECT * FROM `participation` WHERE `id-membre` = '$id'");
+                                                                                                        <?php $ret = mysqli_query($con, "SELECT * FROM `participation` WHERE `id-membre` = '$id' ORDER BY 'id-participation' ASC");
                                                                                                         $cnt = 1;
                                                                                                         while ($row = mysqli_fetch_array($ret)) { ?>
                                                                                                             <?php
                                                                                                             $id2 = $row['id-activite'];
-                                                                                                            $sql2 = mysqli_query($con, "SELECT * FROM `activite` WHERE `id-activite` = '$id2'");
+                                                                                                            $sql2 = mysqli_query($con, "SELECT * FROM `activite` WHERE `id-activite` = '$id2' ");
                                                                                                             while ($row2 = mysqli_fetch_array($sql2)) { ?>
                                                                                                                 <tr>
                                                                                                                     <td>

@@ -584,7 +584,7 @@ if (strlen($_SESSION['id']) == 0) {
                                                                                         elseif ($presence == 7) $jetons = 47000;
                                                                                         elseif ($presence == 8) $jetons = 48000;
                                                                                         elseif ($presence == 9) $jetons = 49000;
-                                                                                        elseif ($presence == 10) $jetons = 50000;
+                                                                                        elseif ($presence >= 10) $jetons = 50000;
                                                                                         echo $jetons;
                                                                                         ?>
                                                                                     </td>

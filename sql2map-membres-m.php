@@ -37,6 +37,7 @@ try {
 				't2' => $eventData['photo-map'],
                 'icon' => $eventData['icon'],
                 'ico-siz' => $eventData['ico-siz'],
+                'membreid' => $eventData['id-membre'],
             ],
             'geometry' => [
                 'type' => 'Point',

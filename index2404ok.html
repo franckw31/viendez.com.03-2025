@@ -87,8 +87,8 @@
             min-height: 100px;
             box-shadow: 5px 5px 4px #8B5D33;
             font-family: 'Oswald';
-            left: -47%;
-            bottom: 40%;
+            left: 62%;
+            bottom: 1px;
             /* top: auto;
             right: auto; */
             opacity: 0.85;
@@ -226,28 +226,6 @@
             width: 135px;
             height: 120px;
             font-size: 2rem;
-        }
-
-        .compact-popup .mapboxgl-popup-content {
-            padding: 10px;
-            width: auto;
-            min-width: 200px;
-            max-width: 300px;
-            min-height: auto;
-            font-size: 12px;
-            opacity: 0.9;
-        }
-
-        .compact-popup table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .compact-popup th,
-        .compact-popup td {
-            padding: 4px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
         }
     </style>
 </head>
@@ -414,30 +392,29 @@
                 // .addTo(map);
             });
             map.on('click', 'hommes', (e) => {
+                map.flyTo({ center: e.features[0].geometry.coordinates, zoom: 14 });
+                const symbo = e.features[0].properties.t2;
                 const coordinates = e.features[0].geometry.coordinates.slice();
-                const memberId = e.features[0].properties.membreid;
-                const memberName = e.features[0].properties.description;
-                
-                // Load only the filtered content
-                fetch(`/panel/prochaines-activites-membre.php?uid=${memberId}&compact=true`)
-                    .then(response => response.text())
-                    .then(content => {
-                        // Create and show the popup with reduced size
-                        new mapboxgl.Popup({ 
-                            closeOnClick: true, 
-                            closeButton: false,
-                            maxWidth: '300px',
-                            className: 'compact-popup'
-                        })
-                        .setLngLat(coordinates)
-                        .setHTML(`<div style="font-weight:bold; margin-bottom:5px;">${memberName}</div>${content}`)
-                        .addTo(map);
-                    });
-            
-                map.flyTo({ 
-                    center: coordinates, 
-                    zoom: 12 
-                });
+                const description = e.features[0].properties.description;
+                while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+                    coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+                }
+                const el = document.createElement('div');
+                el.id = 'marker';
+                el.style.backgroundImage = `${symbo}`;
+                el.style.width = `125px`;
+                el.style.height = `125px`;
+                el.style.opacity = `0.5`;
+                el.style.backgroundSize = `100%`;
+                new mapboxgl.Popup({ closeOnClick: true, closeButton: false })
+                    .setLngLat(coordinates)
+                    .setHTML(description)
+                    .addTo(map);
+                new mapboxgl.Marker(el)
+                    .setLngLat(coordinates)
+                // .setPopup(new mapboxgl.Popup({ offset: 25,closeOnClick: true }).setLngLat(coordinates).setHTML(description)) 
+                // .setPopup(new mapboxgl.Popup({ offset: 25, closeOnClick: true }).setLngLat(coordinates))
+                // .addTo(map);
             });
             map.on('click', 'femmes', (e) => {
                 map.flyTo({ center: e.features[0].geometry.coordinates, zoom: 14 });
