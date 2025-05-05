@@ -33,6 +33,9 @@ if (isset($_POST['submitchoixact'])) {
 if (isset($_POST['submitcreaj'])) {
     $pseudo = trim($_POST['pseudo']);
     $fname = trim($_POST['fname']);
+    $auto_register = isset($_POST['auto_register']) && $_POST['auto_register'] == '1';
+    $selected_activity_id = isset($_SESSION['selected_activity']) ? intval($_SESSION['selected_activity']) : null;
+
     if (!empty($pseudo)) {
         // Check if pseudo already exists
         $check_pseudo_sql = "SELECT `id-membre` FROM `membres` WHERE LOWER(`pseudo`) = LOWER(?)";
@@ -44,8 +47,37 @@ if (isset($_POST['submitcreaj'])) {
                 if (mysqli_stmt_num_rows($stmt_check) > 0) {
                     $_SESSION['feedback'] = "<div class='alert alert-warning'>Le pseudo '" . htmlspecialchars($pseudo) . "' existe déjà.</div>";
                 } else {
-                    // Pseudo doesn't exist, proceed with creation
+                    // Create new player
+                    $sql_create_player = "INSERT INTO `membres` (`pseudo`, `fname`) VALUES (?, ?)";
+                    $stmt_create = mysqli_prepare($con, $sql_create_player);
+                    if ($stmt_create) {
+                        mysqli_stmt_bind_param($stmt_create, "ss", $pseudo, $fname);
+                        if (mysqli_stmt_execute($stmt_create)) {
+                            $new_player_id = mysqli_insert_id($con);
+                            
+                            // Auto-register to activity if requested
+                            if ($auto_register && $selected_activity_id) {
+                                $register_sql = "INSERT INTO `participation` (`id-membre`, `id-activite`, `id-table`, `id-siege`) VALUES (?, ?, 1, 1)";
+                                $stmt_register = mysqli_prepare($con, $register_sql);
+                                if ($stmt_register) {
+                                    mysqli_stmt_bind_param($stmt_register, "ii", $new_player_id, $selected_activity_id);
+                                    if (mysqli_stmt_execute($stmt_register)) {
+                                        $_SESSION['feedback'] = "<div class='alert alert-success'>Joueur créé et inscrit à l'activité : " . htmlspecialchars($pseudo) . "</div>";
+                                    } else {
+                                        $_SESSION['feedback'] = "<div class='alert alert-warning'>Joueur créé mais erreur lors de l'inscription à l'activité : " . htmlspecialchars(mysqli_stmt_error($stmt_register)) . "</div>";
+                                    }
+                                    mysqli_stmt_close($stmt_register);
+                                }
+                            } else {
+                                $_SESSION['feedback'] = "<div class='alert alert-success'>Joueur créé : " . htmlspecialchars($pseudo) . "</div>";
+                            }
+                        } else {
+                            $_SESSION['feedback'] = "<div class='alert alert-danger'>Erreur création joueur : " . htmlspecialchars(mysqli_stmt_error($stmt_create)) . "</div>";
+                        }
+                        mysqli_stmt_close($stmt_create);
+                    }
                 }
+                mysqli_stmt_close($stmt_check);
             }
         }
     } else {
@@ -427,13 +459,26 @@ if ($selected_activity !== null) {
                                                 <tr>
                                                     <th>Prénom</th>
                                                     <td> <input class="form-control" id="fname" name="fname" type="text"> </td>
-                                                 </tr>
-                                                 <tr>
-                                                     <th>&nbsp;</th>
+                                                </tr>
+                                                <?php if ($selected_activity !== null): ?>
+                                                <tr>
+                                                    <th>Inscrire à l'activité</th>
+                                                    <td>
+                                                        <div class="checkbox">
+                                                            <label>
+                                                                <input type="checkbox" name="auto_register" value="1" checked>
+                                                                Inscrire directement à l'activité filtrée (ID: <?php echo $selected_activity; ?>)
+                                                            </label>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                <?php endif; ?>
+                                                <tr>
+                                                    <th>&nbsp;</th>
                                                     <td class="btn-container-cell">
-                                                         <div class="btn-container">
-                                                            <button type="submit" class="btn btn-primary-orange2" name="submitcreaj"> Créer Joueur </button>
-                                                         </div>
+                                                        <div class="btn-container">
+                                                            <button type="submit" class="btn btn-primary-orange2" name="submitcreaj">Créer Joueur</button>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             </table>
@@ -906,18 +951,39 @@ if ($selected_activity !== null) {
                                             $distributions = [];
                                             switch($nb_joueurs_payes) {
                                                 case 1: $distributions = [1.00]; break;
-                                                case 2: $distributions
-                                                            $gain_arrondi = ($gain_estime > 0) ? max(5, round($gain_estime / 5) * 5) : 0;
-                                                            ?>
-                                                            <tr>
-                                                                <td class="cell-center"><?php echo ($i + 1); ?></td>
-                                                                <td class="cell-right"><?php echo number_format($distributions[$i] * 100, 1); ?>%</td>
-                                                                <td class="cell-right"><?php echo number_format($gain_arrondi, 2); ?> €</td>
-                                                            </tr>
-                                                        <?php endfor; ?>
-                                                    </tbody>
-                                                </table>
-                                            </div>
+                                                case 2: $distributions = [0.65, 0.35]; break;
+                                                case 3: $distributions = [0.50, 0.30, 0.20]; break;
+                                                case 4: $distributions = [0.40, 0.30, 0.20, 0.10]; break;
+                                                case 5: $distributions = [0.35, 0.25, 0.20, 0.12, 0.08]; break;
+                                                case 6: $distributions = [0.32, 0.23, 0.17, 0.13, 0.09, 0.06]; break;
+                                                case 7: $distributions = [0.29, 0.21, 0.16, 0.13, 0.10, 0.07, 0.04]; break;
+                                                case 8: $distributions = [0.27, 0.20, 0.15, 0.12, 0.10, 0.08, 0.05, 0.03]; break;
+                                                default: $distributions = [1.00]; break;
+                                            }
+
+                                            echo "<div class='table-responsive'>";
+                                            echo "<table class='data-table distribution-table'>";
+                                            echo "<thead><tr>";
+                                            echo "<th class='cell-center'>Position</th>";
+                                            echo "<th class='cell-right'>Pourcentage</th>";
+                                            echo "<th class='cell-right'>Gain Estimé</th>";
+                                            echo "</tr></thead>";
+                                            echo "<tbody>";
+
+                                            for($i = 0; $i < count($distributions); $i++) {
+                                                $gain_estime = $price_pool * $distributions[$i];
+                                                // Arrondir au multiple de 5 supérieur, minimum 5€
+                                                $gain_arrondi = ($gain_estime > 0) ? max(5, round($gain_estime / 5) * 5) : 0;
+                                                
+                                                echo "<tr>";
+                                                echo "<td class='cell-center'>" . ($i + 1) . "</td>";
+                                                echo "<td class='cell-right'>" . number_format($distributions[$i] * 100, 1) . "%</td>";
+                                                echo "<td class='cell-right'>" . number_format($gain_arrondi, 2) . " €</td>";
+                                                echo "</tr>";
+                                            }
+
+                                            echo "</tbody></table></div>";
+                                            ?>
                                         <?php else: ?>
                                             <div class="alert alert-info">Sélectionnez une activité pour voir la répartition du Prize Pool.</div>
                                         <?php endif; ?>
