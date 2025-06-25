@@ -3,6 +3,8 @@ session_start();
 error_reporting(0);
 include('include/config.php');
 
+
+
 // Check if user is logged in
 if (strlen($_SESSION['id']) == 0) {
     header('location:logout.php');
@@ -28,12 +30,12 @@ if (isset($_POST['submit']) ) {
     $verification = mysqli_real_escape_string($con, $_POST['verification']);
     $pseudo = mysqli_real_escape_string($con, $_POST['pseudo']);
     $def_nomact = mysqli_real_escape_string($con, $_POST['def_nomact']);
-    $def_str = mysqli_real_escape_string($con, $_POST['极狐def_str']);
+    $def_str = mysqli_real_escape_string($con, $_POST['def_str']);
     $def_nbj = mysqli_real_escape_string($con, $_POST['def_nbj']);
     $def_buy = mysqli_real_escape_string($con, $_POST['def_buy']);
     $def_rak = mysqli_real_escape_string($con, $_POST['def_rak']);
     $def_bou = mysqli_real_escape_string($con, $_POST['def_bou']);
-    $def_rec = mysqli_real极狐_escape_string($con, $_POST['def_rec']);
+    $def_rec = mysqli_real_escape_string($con, $_POST['def_rec']);
     $def_jet = mysqli_real_escape_string($con, $_POST['def_jet']);
     $def_bon = mysqli_real_escape_string($con, $_POST['def_bon']);
     $def_add = mysqli_real_escape_string($con, $_POST['def_add']);
@@ -102,7 +104,7 @@ if (isset($_POST['submito'])) {
             def_bon = ?,
             def_add = ?,
             def_ant = ?,
-            def_极狐rdv = ?,
+            def_rdv = ?,
             def_sta = ?,
             def_com = ?
             WHERE `id-membre` = ?");
@@ -238,7 +240,7 @@ if (isset($_POST['submitdup'])) {
     } catch (Exception $e) {
         mysqli_rollback($con);
         error_log("Error creating activity: " . $e->getMessage());
-        $_SESSION['error'] = "极狐Erreur: " . $e->getMessage();
+        $_SESSION['error'] = "Erreur: " . $e->getMessage();
     } finally {
         if (isset($stmt)) {
             mysqli_stmt_close($stmt);
@@ -260,91 +262,6 @@ if (isset($_POST['submit3'])) {
     $_SESSION['msg'] = "Loisir added successfully !!";
 }
 
-// Handle photo upload
-if (isset($_FILES['fileToUpload']) && isset($_POST['id'])) {
-    $id = intval($_POST['id']);
-    // Use relative path to images directory
-    $target_dir = '../images/faces/';
-    
-    // Ensure directory exists and is writable
-    if (!file_exists($target_dir)) {
-        if (!mkdir($target_dir, 0755, true)) {
-            $_SESSION['error'] = "Impossible de créer le répertoire de destination: " . $target_dir;
-            header("Location: voir-membre.php?id=".$id);
-            exit();
-        }
-    } elseif (!is_writable($target_dir)) {
-        $_SESSION['error'] = "Le répertoire de destination n'est pas accessible en écriture: " . $target_dir;
-        header("Location: voir-membre.php?id=".$id);
-        exit();
-    }
-    
-    // Debug - log target directory and full path
-    error_log("Uploading to directory: " . $target_dir);
-    error_log("Full path: " . realpath($target_dir));
-    error_log("Is writable: " . (is_writable($target_dir) ? 'Yes' : 'No'));
-    error_log("File info: " . print_r($_FILES["fileToUpload"], true));
-
-    $uploadOk = 1;
-    $imageFileType = strtolower(pathinfo($_FILES["fileToUpload"]["name"], PATHINFO_EXTENSION));
-
-    // Check if image file is a actual image or fake image
-    $check = getimagesize($_FILES["fileToUpload"]["tmp_name"]);
-    if ($check === false) {
-        $_SESSION['error'] = "Le fichier n'est pas une image valide.";
-        $uploadOk = 0;
-    }
-
-    // Check file size (limit to 2MB)
-    if ($_FILES["fileToUpload"]["size"] > 2000000) {
-        $_SESSION['error'] = "Le fichier est trop volumineux (max 2MB).";
-        $uploadOk = 0;
-    }
-
-    // Allow certain file formats
-    if(!in_array($imageFileType, ['jpg', 'png', 'jpeg', 'gif'])) {
-        $_SESSION['error'] = "Seuls les fichiers JPG, JPEG, PNG et GIF sont autorisés.";
-        $uploadOk = 0;
-    }
-
-    // Generate unique filename to prevent overwriting
-    $new_filename = 'profile_' . $id . '_' . time() . '.' . $imageFileType;
-    $target_file = $target_dir . $new_filename;
-
-    if ($uploadOk) {
-        // First get old photo filename to delete it later
-        $stmt = mysqli_prepare($con, "SELECT photo FROM membres WHERE `id-membre` = ?");
-        mysqli_stmt_bind_param($stmt, 'i', $id);
-        mysqli_stmt_execute($stmt);
-        mysqli_stmt_bind_result($stmt, $old_photo);
-        mysqli_stmt_fetch($stmt);
-        mysqli_stmt_close($stmt);
-
-        error_log("Attempting to move file from: " . $_FILES["fileToUpload"]["tmp_name"] . " to: " . $target_file);
-        if (move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $target_file)) {
-            error_log("File moved successfully");
-            // Delete old photo if it exists
-            if (!empty($old_photo) && file_exists($target_dir . $old_photo)) {
-                @unlink($target_dir . $old_photo);
-            }
-            // Update database
-            $stmt = mysqli_prepare($con, "UPDATE membres SET photo = ? WHERE `id-membre` = ?");
-            mysqli_stmt_bind_param($stmt, 'si', $new_filename, $id);
-            if (mysqli_stmt_execute($stmt)) {
-                $_SESSION['msg'] = "Photo de profil mise à jour avec succès.";
-                // Refresh page to show new photo
-                header("Location: voir-membre.php?id=".$id);
-                exit();
-            } else {
-                $_SESSION['error'] = "Erreur lors de la mise à jour de la base de données.";
-            }
-            mysqli_stmt_close($stmt);
-        } else {
-            $_SESSION['error'] = "Erreur lors du téléchargement du fichier.";
-        }
-    }
-}
-
 if (isset($_POST['submit4'])) {
     $col = $_POST['col'];
     echo $col;
@@ -358,6 +275,68 @@ if (isset($_POST['submit4'])) {
 
 <head>
     <title>Admin | Edition Membre</title>
+    <style media="screen">
+        .upload {
+            width: 75px;
+            position: relative;
+            margin: auto;
+            text-align: center;
+        }
+
+        .upload img {
+            border-radius: 40%;
+            border: 6px solid #DCDCDC;
+            width: 100px;
+            height: 100px;
+        }
+
+        .upload .rightRound {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background: #00B4FF;
+            width: 25px;
+            height: 25px;
+            line-height: 25px;
+            text-align: center;
+            border-radius: 50%;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .upload .leftRound {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            background: red;
+            width: 25px;
+            height: 25px;
+            line-height: 25px;
+            text-align: center;
+            border-radius: 50%;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .upload .fa {
+            color: white;
+        }
+
+        .upload input {
+            position: absolute;
+            transform: scale(2);
+            opacity: 0;
+        }
+
+        .upload input::-webkit-file-upload-button,
+        .upload input[type=submit] {
+            cursor: pointer;
+        }
+
+        .white-text {
+            color: #ffffff !important;
+        }
+    </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link href="http://fonts.googleapis.com/css?family=Lato:300,400,400italic,600,700|Raleway:300,400,500,600,700|Crete+Round:400italic" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" href="vendor/bootstrap/css/bootstrap.min.css">
@@ -367,7 +346,7 @@ if (isset($_POST['submit4'])) {
     <link href="vendor/perfect-scrollbar/perfect-scrollbar.min.css" rel="stylesheet" media="screen">
     <link href="vendor/switchery/switchery.min.css" rel="stylesheet" media="screen">
     <link href="vendor/bootstrap-touchspin/jquery.bootstrap-touchspin.min.css" rel="stylesheet" media="screen">
-    <link href极狐="vendor/select2/select2.min.css" rel="stylesheet" media="screen">
+    <link href="vendor/select2/select2.min.css" rel="stylesheet" media="screen">
     <link href="vendor/bootstrap-datepicker/bootstrap-datepicker3.standalone.min.css" rel="stylesheet" media="screen">
     <!-- <link href="https://cdn.jsdelivr.net/npm/simple-datatables@latest/dist/style.css" rel="stylesheet" /> -->
     <link href="vendor/bootstrap-timepicker/bootstrap-timepicker.min.css" rel="stylesheet" media="screen">
@@ -428,7 +407,6 @@ if (isset($_POST['submit4'])) {
         });
     </script>
     <link rel="stylesheet" href="css/mes-styles.css">
-    <link rel="stylesheet" href="voir-membre.css">
     <link rel="stylesheet" href="css/les-styles.css">
     <script type="text/javascript">
         function valid() {
@@ -526,22 +504,14 @@ if (isset($_POST['submit4'])) {
                                                                         <table style="color: white;" class="table table-bordered current-user">
                                                                             <tr>
                                                                                 <td rowspan="3" align=center>
-                                                                                    <img src="../images/faces/<?php echo $row['photo']; ?>" width="85" height="85" style="align:center">
+                                                                                    <img src="images/<?php echo $row['photo']; ?>" width="85" height="85" style="align:center">
                                                                                     <form id="image_upload_form" enctype="multipart/form-data" method="post" class="change-pic">
                                                                                         <input type="hidden" name="id" value="<?php echo $id; ?>">
-                                                                                        <input type="file" name="fileToUpload" id="fileToUpload" style="display:none;" accept="image/*" onchange="showSpinner(); this.form.submit();">
+                                                                                        <input type="file" name="fileToUpload" id="fileToUpload" style="display:none;" accept="image/*" onchange="this.form.submit()">
                                                                                         <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('fileToUpload').click();">
                                                                                             <i class="fa fa-camera"></i> Changer Photo
                                                                                         </button>
-                                                                                        <span id="upload-spinner" style="display:none; margin-left:10px;">
-                                                                                            <i class="fa fa-spinner fa-spin"></i> Uploading...
-                                                                                        </span>
                                                                                     </form>
-                                                                                    <script>
-                                                                                        function showSpinner() {
-                                                                                            document.getElementById('upload-spinner').style.display = 'inline-block';
-                                                                                        }
-                                                                                    </script>
                                                                                 </td>
                                                                                 <form method="post">
                                                                                     <th style="color:rgb(64, 30, 235) !important;">Votre Pseudo :</th>
@@ -575,14 +545,14 @@ if (isset($_POST['submit4'])) {
                                                                                 </td>
                                                                             </tr>
                                                                             <tr>
-                                                                                <th style极狐="color: #ffffff !important;">Téléphone</th>
+                                                                                <th style="color: #ffffff !important;">Téléphone</th>
                                                                                 <td><input class="form-control" id="telephone" name="telephone" type="text" value="<?php echo $row['telephone']; ?>"></td>
                                                                                 <th style="color: #ffffff !important;">Email</th>
                                                                                 <td><input class="form-control" id="email" name="email" type="text" value="<?php echo $row['email']; ?>"></td>
                                                                             </tr>
                                                                             <tr>
                                                                                 <th style="color: #ffffff !important;">Adresse</th>
-                                                                                <td><input class="form-control" id="rue" name="rue" type="text" value="<?php echo $row['rue']; ?>"></极狐td>
+                                                                                <td><input class="form-control" id="rue" name="rue" type="text" value="<?php echo $row['rue']; ?>"></td>
                                                                                 <th style="color: #ffffff !important;">Ville</th>
                                                                                 <td><input class="form-control" id="ville" name="ville" type="text" value="<?php echo $row['ville']; ?>"></td>
                                                                             </tr>
@@ -656,23 +626,19 @@ if (isset($_POST['submit4'])) {
                                                                     ?>
                                                                         <table style="color: white;" class="table table-bordered current-user">
                                                                             <tr>
-                                                                                <td rowspan="3" align=center>
-                                                                                    <img src="../images/faces/<?php echo $row['photo_org']; ?>" width="85" height="85" style="align:center">
-                                                                                    <form id="image_upload_form" enctype="multipart/form-data" method="post" class="change-pic">
-                                                                                        <input type="hidden" name="id" value="<?php echo $id; ?>">
-                                                                                        <input type="file" name="fileToUpload" id="fileToUpload" style="display:none;" accept="image/*" onchange="showSpinner(); this.form.submit();">
-                                                                                        <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('fileToUpload').click();">
-                                                                                            <i class="fa fa-camera"></i> Changer Photo
-                                                                                        </button>
-                                                                                        <span id="upload-spinner" style="display:none; margin-left:10px;">
-                                                                                            <i class="fa fa-spinner fa-spin"></i> Uploading...
-                                                                                        </span>
+                                                                                <td rowspan="3" align=center><img src="images/<?php echo $row['photo']; ?>" width="85" height="85" style="align:center">
+                                                                                    <form id="image_upload_form" enctype="multipart/form-data" action="uploadokvide.php?editid=<?php echo $id; ?>" method="post" class="change-pic">
+                                                                                        <input type="hidden" name="MAX_FILE_SIZE" value="10000000" />
+                                                                                        <div>
+                                                                                            <input type="file" class="fa fa-camera" id="file" name="fileToUpload" style="display:none;" /><input type="button" onClick="fileToUpload.click();" value="Modifier" />
+                                                                                            <i class="fa fa-camera"></i>
+                                                                                        </div>
+                                                                                        <script type="text/javascript">
+                                                                                            document.getElementById("file").onchange = function() {
+                                                                                                document.getElementById("image_upload_form").submit();
+                                                                                            };
+                                                                                        </script>
                                                                                     </form>
-                                                                                    <script>
-                                                                                        function showSpinner() {
-                                                                                            document.getElementById('upload-spinner').style.display = 'inline-block';
-                                                                                        }
-                                                                                    </script>
                                                                                 </td>
                                                                                 <form method="post">
                                                                                     <th style="color:rgb(64, 30, 235) !important;">Activité :</th>
@@ -739,7 +705,7 @@ if (isset($_POST['submit4'])) {
                                                                             </tr>
                                                                             <tr>
                                                                                 <th style="color: #ffffff !important;">Rendez-vous</th>
-                                                                                <td><input class="form-control" id="def_rdv" name="def_rd极狐v" type="text" value="<?php echo $row['def_rdv']; ?>">
+                                                                                <td><input class="form-control" id="def_rdv" name="def_rdv" type="text" value="<?php echo $row['def_rdv']; ?>">
                                                                                 </td>
                                                                                 <th style="color: #ffffff !important;">Debut</th>
                                                                                 <td><input class="form-control" id="def_sta" name="def_sta" type="text" value="<?php echo $row['def_sta']; ?>">
@@ -796,7 +762,7 @@ if (isset($_POST['submit4'])) {
                                                                     ?>
                                                                         <table style="color: white;" class="table table-bordered current-user">
                                                                             <tr>
-                                                                                <td rowspan="3" align=center><img src="../images/faces/<?php echo $row['photo']; ?>" width="85" height="85" style="align:center">
+                                                                                <td rowspan="3" align=center><img src="images/<?php echo $row['photo']; ?>" width="85" height="85" style="align:center">
                                                                                     <form id="image_upload_form" enctype="multipart/form-data" action="uploadokvide.php?editid=<?php echo $id; ?>" method="post" class="change-pic">
                                                                                         <input type="hidden" name="MAX_FILE_SIZE" value="10000000" />
                                                                                         <div>
@@ -901,7 +867,7 @@ if (isset($_POST['submit4'])) {
                                                                                 <td style="display:none;" style="text-align:center ;">
                                                                                     <button type="submit" class="btn btn-primary btn-block" name="submito">Mise à jour</button>
                                                                                 </td>
-                                                                                <!--<极狐td colspan="2">
+                                                                                <!--<td colspan="2">
                                                                                     <a href="liste-membres.php">Quitter </a>
                                                                                 </td> -->
                                                                             </tr>
@@ -1103,7 +1069,7 @@ if (isset($_POST['submit4'])) {
                                                                                                                     <a href="ajout-loisirs.php?id=<?php echo $row['id'] ?>&del=deleteind" onClick="return confirm('Are you sure you want to delete?')" class="btn btn-transparent btn-xs tooltips" tooltip-placement="top" tooltip="Remove"><i class="fa fa-times fa fa-white"></i></a>
                                                                                                                 </td>
                                                                                                                 </tr>
-                                                                                                            <?php $cnt = $极狐cnt + 1;
+                                                                                                            <?php $cnt = $cnt + 1;
                                                                                                             } ?>
                                                                                                     </tbody>
                                                                                                 </table>
@@ -1167,7 +1133,7 @@ if (isset($_POST['submit4'])) {
                                                                                     <div class="container-fluid px-4">
                                                                                         <!--    <h1 class="mt-4">Gestion des Competences</h1> -->
                                                                                         <ol class="breadcrumb mb-4">
-                                                                                           极狐 <li class="breadcrumb-item">
+                                                                                            <li class="breadcrumb-item">
                                                                                                 <a href="liste-membres.php">Membres</a>
                                                                                             </li>
                                                                                             <li class="breadcrumb-item active">
@@ -1375,7 +1341,7 @@ if (isset($_POST['submit4'])) {
                                                                     </div>
                                                                 </div>
                                                             </div>
-                                                        </极狐div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>

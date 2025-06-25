@@ -1,3 +1,73 @@
+.gain-input {
+            text-align: right;
+            width: 80px !important;
+            min-width: 80px;
+            padding: 2px 4px;
+        }
+
+        td.cell-right input[type="number"] {
+            text-align: right;
+        }
+.gain-input {
+    text-align: right !important;
+    padding: 2px 4px !important;
+    width: 80px !important;
+}
+
+.alpha-keyboard {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 10px;
+    width: 100%;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.alpha-key {
+    padding: 8px 12px;
+    margin: 2px;
+    border: 1px solid #ddd;
+    background: #ffffff;
+    cursor: pointer;
+    border-radius: 4px;
+    min-width: 35px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 14px;
+    transition: all 0.2s;
+    color: #333;
+}
+
+.alpha-key:hover {
+    background-color: #007bff;
+    color: white;
+    border-color: #0056b3;
+}
+
+.alpha-key.active {
+    background-color: #007bff;
+    color: white;
+    border-color: #0056b3;
+}
+
+.alpha-key-special {
+    background-color: #6c757d;
+    color: white;
+    border-color: #545b62;
+    width: auto;
+    padding: 8px 20px;
+}
+
+.membre-select-container {
+    margin-bottom: 15px;
+}
+
+#membre_select {
+    margin-bottom: 10px;
+}
+
 :root {
     --primary-color: #ff6b2b; /* Orange */
     --primary-hover: #ff8651;

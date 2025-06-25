@@ -1,81 +1,50 @@
-<html>
-  <head>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-  <style media="screen">
-    .upload{
-      width: 140px;
-      position: relative;
-      margin: auto;
-      text-align: center;
-    }
-    .upload img{
-      border-radius: 50%;
-      border: 8px solid #DCDCDC;
-      width: 125px;
-      height: 125px;
-    }
-    .upload .rightRound{
-      position: absolute;
-      bottom: 0;
-      right: 0;
-      background: #00B4FF;
-      width: 32px;
-      height: 32px;
-      line-height: 33px;
-      text-align: center;
-      border-radius: 50%;
-      overflow: hidden;
-      cursor: pointer;
-    }
-    .upload .leftRound{
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      background: red;
-      width: 32px;
-      height: 32px;
-      line-height: 33px;
-      text-align: center;
-      border-radius: 50%;
-      overflow: hidden;
-      cursor: pointer;
-    }
-    .upload .fa{
-      color: white;
-    }
-    .upload input{
-      position: absolute;
-      transform: scale(2);
-      opacity: 0;
-    }
-    .upload input::-webkit-file-upload-button, .upload input[type=submit]{
-      cursor: pointer;
-    }
-  </style>
-    <body>
-      <?php
-      define('DB_SERVER','db5011397709.hosting-data.io');
-      define('DB_USER','dbu5472475');
-      define('DB_PASS' ,'Kookies7*');
-      define('DB_NAME', 'dbs9616600');
-      $con = mysqli_connect(DB_SERVER,DB_USER,DB_PASS,DB_NAME);
-      
+<?php
+// Include database configuration
+include('include/config.php');
+
+// Check if file was uploaded
+if(empty($_FILES["fileToUpload"]["tmp_name"])) {
+    die("No file was uploaded.");
+}
+
+// File upload settings
 $target_dir = "images/";
-$target_file = $target_dir . basename($_FILES["fileToUpload"]["name"]);
-$aimg=$_FILES["fileToUpload"]["name"];
-$aniid=$_GET['editid'];
+$allowed_types = ['image/jpeg', 'image/png', 'image/gif'];
+$max_size = 200 * 1024 * 1024; // 2MB
+$aniid = intval($_GET['editid']);
 
-  if (move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $target_file)) 
-    {
-    $query=mysqli_query($con, "UPDATE `membres` SET `photo` = '$aimg' WHERE `membres`.`id-membre` = $aniid");
-    echo $aimg."-ok-".$aniid;
-	  header('Location: http://poker31.org');
+// Validate file
+$file_type = $_FILES["fileToUpload"]["type"];
+$file_size = $_FILES["fileToUpload"]["size"];
+$file_ext = strtolower(pathinfo($_FILES["fileToUpload"]["name"], PATHINFO_EXTENSION));
+
+if(!in_array($file_type, $allowed_types)) {
+    die("Error: Only JPG, PNG & GIF files are allowed.");
+}
+
+if($file_size > $max_size) {
+    die("Error: File size must be less than 2MB.");
+}
+
+// Generate unique filename
+$new_filename = "member_".$aniid."_".time().".".$file_ext;
+$target_file = $target_dir . $new_filename;
+
+// Move uploaded file
+if(move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $target_file)) {
+    // Update database
+    $query = mysqli_query($con, "UPDATE membres SET photo = '".mysqli_real_escape_string($con, $new_filename)."' 
+              WHERE `id-membre` = $aniid");
+    
+    if(!$query) {
+        unlink($target_file); // Delete uploaded file if DB update fails
+        die("Database update failed: ".mysqli_error($con));
     }
-    else
-    {
-      echo "Sorry, there was an error uploading your file.";
-    };
-
+    
+    // Redirect back to member page
+    header("lLocation: vvoir-membre.php?id=$aniid");
+    exit();
+} else {
+    die("Error uploading file. Please try again.");
+}
 ?>
-  <script type="text/javascript">window.location.replace("voir-membre.php?id=<?php echo $aniid; ?>");</script> 
-

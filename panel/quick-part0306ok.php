@@ -6,7 +6,7 @@ session_start();
 // error_reporting(E_ALL);
 error_reporting(0); // Production setting
 
-include(__DIR__ . '/../asup-config.php'); // Ensure DB connection ($con)
+include('include/config.php'); // Ensure DB connection ($con)
 
 // --- Initial Variable Setup & Defaults ---
 $gid_part = isset($_GET['part']) ? intval($_GET['part']) : null;
@@ -37,8 +37,8 @@ if (isset($_POST['submitcreaj'])) {
     $selected_activity_id = isset($_SESSION['selected_activity']) ? intval($_SESSION['selected_activity']) : null;
 
     if (!empty($pseudo)) {
-        // Check if pseudo already exists (with whitespace handling)
-        $check_pseudo_sql = "SELECT `id-membre` FROM `membres` WHERE LOWER(TRIM(`pseudo`)) = LOWER(TRIM(?))";
+        // Check if pseudo already exists
+        $check_pseudo_sql = "SELECT `id-membre` FROM `membres` WHERE LOWER(`pseudo`) = LOWER(?)";
         $stmt_check = mysqli_prepare($con, $check_pseudo_sql);
         if ($stmt_check) {
             mysqli_stmt_bind_param($stmt_check, "s", $pseudo);
@@ -329,9 +329,9 @@ if ($selected_activity !== null) {
 </head>
 <body>
     <div id="app">
-    <?php include('include/sidebar.php'); ?>
-    <div class="app-content">
-    <?php include('/include/header.php'); ?>
+        <?php include('include/sidebar.php'); ?>
+        <div class="app-content">
+            <?php include('include/header.php'); ?>
             <!-- start: MAIN CONTAINER -->
             <div class="main-content" >
                 <div class="wrap-content container" id="container">
@@ -475,19 +475,30 @@ if ($selected_activity !== null) {
                                                  <tr>
                                                     <th>Joueur *</th>
                                                     <td>
-                                                        <?php
-                                                        $membres_reg = mysqli_query($con, "SELECT `id-membre`,`pseudo` FROM `membres` ORDER BY `pseudo` ASC");
-                                                        echo "<select name='membre' id='membre_select' class='form-control' required>
-                                                            <option value=''>-- Sélectionner Pseudo --</option>";
-                                                        if ($membres_reg) {
-                                                            while ($choix = mysqli_fetch_assoc($membres_reg)) {
-                                                                echo "<option value='" . htmlspecialchars($choix["id-membre"]) . "'>" 
-                                                                    . htmlspecialchars($choix["pseudo"]) . "</option>";
+                                                        <div class="membre-select-container">
+                                                            <div class="alpha-keyboard">
+                                                                <?php
+                                                                $alphabet = range('A', 'Z');
+                                                                foreach ($alphabet as $letter) {
+                                                                    echo "<span class='alpha-key' data-letter='$letter'>$letter</span>";
+                                                                }
+                                                                ?>
+                                                                <span class="alpha-key alpha-key-special" data-letter="">Tous</span>
+                                                            </div>
+                                                            <?php
+                                                            $membres_reg = mysqli_query($con, "SELECT `id-membre`,`pseudo` FROM `membres` ORDER BY `pseudo` ASC");
+                                                            echo "<select name='membre' id='membre_select' class='form-control' required>
+                                                                <option value=''>-- Sélectionner Pseudo --</option>";
+                                                            if ($membres_reg) {
+                                                                while ($choix = mysqli_fetch_assoc($membres_reg)) {
+                                                                    echo "<option value='" . htmlspecialchars($choix["id-membre"]) . "'>" 
+                                                                        . htmlspecialchars($choix["pseudo"]) . "</option>";
+                                                                }
+                                                                mysqli_free_result($membres_reg);
                                                             }
-                                                            mysqli_free_result($membres_reg);
-                                                        }
-                                                        echo "</select>";
-                                                        ?>
+                                                            echo "</select>";
+                                                            ?>
+                                                        </div>
                                                     </td>
                                                  </tr>
                                                  <tr>
@@ -1066,8 +1077,8 @@ JOIN activite a ON p.`id-activite` = a.`id-activite`";
                 </div>
             </div>
             <!-- end: MAIN CONTAINER -->
-    <?php include('include/footer.php'); ?>
-    <?php include('include/setting.php'); ?>
+            <?php include('include/footer.php'); ?>
+            <?php include('include/setting.php'); ?>
         </div>
     </div><!-- /app -->
 
@@ -1151,6 +1162,7 @@ JOIN activite a ON p.`id-activite` = a.`id-activite`";
             }
 
             // Specific JS from original quick-part.php for seat selection
+            const occupiedSeats = <?php echo isset($occupied_seats_json) ? $occupied_seats_json : '[]'; ?>;
             const tableSelect = document.getElementById('table_reg_select');
             const siegeSelect = document.getElementById('siege_reg_select');
             // const activitySelect = document.getElementById('acti_reg_select'); // Not needed if relying on filter button
@@ -1285,12 +1297,6 @@ JOIN activite a ON p.`id-activite` = a.`id-activite`";
         $('#membre_select').val('').focus();
     });
         });
-        
-    // Add sidebar toggle functionality using event delegation
-    $(document).on('click', '.sidebar-toggler', function(e) {
-        e.preventDefault();
-        $('#app').toggleClass('app-sidebar-closed');
-    });
     </script>
 </body>
 </html>

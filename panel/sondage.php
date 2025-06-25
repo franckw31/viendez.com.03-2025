@@ -6,11 +6,11 @@ session_start();
 // error_reporting(E_ALL);
 error_reporting(0); // Production setting
 
-include(__DIR__ . '/../asup-config.php'); // Ensure DB connection ($con)
+include('include/config.php'); // Ensure DB connection ($con)
 
 // --- Initial Variable Setup & Defaults ---
 $gid_part = isset($_GET['part']) ? intval($_GET['part']) : null;
-$gid_acti = isset($_GET['acti']) ? intval($_GET['acti']) : null;
+$gid_challenge = isset($_GET['challenge']) ? intval($_GET['challenge']) : null;
 $gid_tabl = isset($_GET['tabl']) ? intval($_GET['tabl']) : null;
 $gid_sieg = isset($_GET['sieg']) ? intval($_GET['sieg']) : null;
 $source = isset($_GET['sour']) ? $_GET['sour'] : '';
@@ -29,6 +29,31 @@ if (isset($_POST['submitchoixact'])) {
     exit;
 }
 
+// --- Handle Challenge Choice Submission ---
+if (isset($_POST['submitchoixchallenge'])) {
+    $challenge_choice = $_POST['challenge'];
+    if ($challenge_choice != '-Anonyme-' && filter_var($challenge_choice, FILTER_VALIDATE_INT)) {
+        $_SESSION['selected_challenge'] = intval($challenge_choice);
+        unset($_SESSION['selected_activity']); // Pour éviter les conflits
+    } else {
+        unset($_SESSION['selected_challenge']);
+    }
+    header("Location: " . $_SERVER['PHP_SELF']);
+    exit;
+}
+
+// Ajouter au début du fichier, après les autres gestionnaires POST
+if (isset($_POST['submitchoixchallenge'])) {
+    $challenge_choice = $_POST['challenge'];
+    if ($challenge_choice != '-Anonyme-' && filter_var($challenge_choice, FILTER_VALIDATE_INT)) {
+        $_SESSION['selected_challenge'] = intval($challenge_choice);
+    } else {
+        unset($_SESSION['selected_challenge']);
+    }
+    header("Location: " . $_SERVER['PHP_SELF']);
+    exit;
+}
+
 // --- Handle Quick Player Creation ---
 if (isset($_POST['submitcreaj'])) {
     $pseudo = trim($_POST['pseudo']);
@@ -37,8 +62,8 @@ if (isset($_POST['submitcreaj'])) {
     $selected_activity_id = isset($_SESSION['selected_activity']) ? intval($_SESSION['selected_activity']) : null;
 
     if (!empty($pseudo)) {
-        // Check if pseudo already exists (with whitespace handling)
-        $check_pseudo_sql = "SELECT `id-membre` FROM `membres` WHERE LOWER(TRIM(`pseudo`)) = LOWER(TRIM(?))";
+        // Check if pseudo already exists
+        $check_pseudo_sql = "SELECT `id-membre` FROM `membres` WHERE LOWER(`pseudo`) = LOWER(?)";
         $stmt_check = mysqli_prepare($con, $check_pseudo_sql);
         if ($stmt_check) {
             mysqli_stmt_bind_param($stmt_check, "s", $pseudo);
@@ -168,86 +193,143 @@ if (isset($_POST['submitsupc'])) {
 
 // --- Handle form submission for updating participations ---
 if (isset($_POST['update_participation'])) {
-    if (!isset($_SESSION['selected_activity'])) {
-        $_SESSION['feedback'] = "<div class='alert alert-warning'>Veuillez sélectionner une activité.</div>";
-        header("Location: " . $_SERVER['PHP_SELF']);
-        exit;
-    }
+    $batch_error_messages = [];
+    $update_success_overall = true;
 
-    $sql_update = "UPDATE participation SET 
-        challenger = ?,
-        `id-table` = ?,
-        `id-siege` = ?,
-        rake = ?,
-        recave = ?,
-        classement = ?,
-        tf = ?,
-        remise = ?,
-        gain = ?,
-        points = ?,
-        cagnotte = ?,
-        cout_in = ?
-        WHERE `id-participation` = ?";
+    $selected_challenge_id_for_update = isset($_SESSION['selected_challenge']) ? intval($_SESSION['selected_challenge']) : null;
+    $activity_buyin_for_calc = 0.0; // Renamed to avoid confusion
 
-    $stmt_update = mysqli_prepare($con, $sql_update);
-    if ($stmt_update) {
-        foreach ($_POST['participations'] as $participation) {
-            if (!isset($participation['id_participation'])) continue;
-
-            // Get form values
-            $challenger = isset($participation['challenger']) ? 1 : 0;
-            $table = intval($participation['table']);
-            $siege = intval($participation['siege']);
-            $rake = floatval($participation['rake']);
-            $recave = intval($participation['recave']);
-            $classement = $participation['classement'] !== '' ? intval($participation['classement']) : null;
-            $tf = isset($participation['tf']) ? 1 : 0;
-            $remise = isset($participation['remise']) ? 1 : 0;
-            $gain = isset($participation['gain']) ? floatval(str_replace(',', '.', $participation['gain'])) : 0;
-            
-            // Calculate points based on challenger status AND gains
-            if ($gain == 0) {
-                $points = 0;
+    if ($selected_challenge_id_for_update) {
+        $activity_details_query = "SELECT buyin FROM activite WHERE `id-activite` = ?";
+        $stmt_activity = mysqli_prepare($con, $activity_details_query);
+        if ($stmt_activity) {
+            mysqli_stmt_bind_param($stmt_activity, "i", $selected_challenge_id_for_update);
+            if (mysqli_stmt_execute($stmt_activity)) {
+                $activity_result = mysqli_stmt_get_result($stmt_activity);
+                if ($activity_row = mysqli_fetch_assoc($activity_result)) {
+                    $activity_buyin_for_calc = floatval($activity_row['buyin'] ?? 0.0);
+                } else {
+                    $batch_error_messages[] = "Détails (buyin) de l'activité ID {$selected_challenge_id_for_update} non trouvés.";
+                    $update_success_overall = false;
+                }
+                mysqli_free_result($activity_result);
             } else {
-                $points = $challenger ? (1 + $tf + ($classement == 1 ? 1 : 0)) : 0;
-                // Add points from gains (gain/10)
-                $points += ($gain / 10);
+                 $batch_error_messages[] = "Erreur execution requête Détails Activité: " . htmlspecialchars(mysqli_stmt_error($stmt_activity));
+                 $update_success_overall = false;
             }
-            
-            // Calculate cagnotte
-            $cagnotte = $challenger ? (($recave * 3) + 3) : 0;
-            
-            // Calculate cout_in
-            $buyin = isset($participation['buyin_display']) ? floatval($participation['buyin_display']) : 0;
-            $cout_in = $buyin + $rake + ($challenger ? 5 : 0);
-
-            mysqli_stmt_bind_param($stmt_update, "iiidiiiididdd", 
-                $challenger,
-                $table,
-                $siege,
-                $rake,
-                $recave,
-                $classement,
-                $tf,
-                $remise,
-                $gain,
-                $points,
-                $cagnotte,
-                $cout_in,
-                $participation['id_participation']
-            );
-            
-            if (!mysqli_stmt_execute($stmt_update)) {
-                error_log("Erreur mise à jour participation: " . mysqli_stmt_error($stmt_update));
-            }
+            mysqli_stmt_close($stmt_activity);
+        } else {
+            $batch_error_messages[] = "Erreur préparation requête Détails Activité: " . htmlspecialchars(mysqli_error($con));
+            $update_success_overall = false;
         }
-        mysqli_stmt_close($stmt_update);
-        $_SESSION['feedback'] = "<div class='alert alert-success'>Participations mises à jour avec succès.</div>";
+    } else {
+        $batch_error_messages[] = "Veuillez d'abord filtrer par une activité pour effectuer la mise à jour.";
+        $update_success_overall = false;
     }
+
+    if ($update_success_overall && $selected_challenge_id_for_update) {
+            $sql_update = "UPDATE participation SET
+                       challenger = ?, `id-table` = ?, `id-siege` = ?, cout_in = ?,
+                       rake = ?, recave = ?, classement = ?, tf = ?, points = ?,
+                       cagnotte = ?, remise = ?
+                       WHERE `id-membre` = ? AND `id-activite` = ?";
+
+        $stmt_update = mysqli_prepare($con, $sql_update);
+
+        if ($stmt_update) {
+            $base_activity_buyin = $activity_buyin_for_calc;
+            $row_update_errors = 0;
+
+            if (isset($_POST['participations']) && is_array($_POST['participations'])) {
+                foreach ($_POST['participations'] as $index => $participation) {
+                    $form_activite_id = intval($participation['activite_id']);
+                    if ($form_activite_id !== $selected_challenge_id_for_update) {
+                        $batch_error_messages[] = "Erreur: Incohérence d'ID d'activité pour la ligne #$index. Mise à jour ignorée.";
+                        $row_update_errors++;
+                        continue;
+                    }
+
+                    $membre_id = intval($participation['membre_id']);
+                    $challenger = isset($participation['challenger']) ? 1 : 0;
+                    $table = intval($participation['table'] ?? 1);
+                    $siege = intval($participation['siege'] ?? 1);
+                    $tf = isset($participation['tf']) ? 1 : 0;
+                    $participation_rake_value = ($participation['rake'] === '' || $participation['rake'] === null) ? 0.0 : floatval($participation['rake']);
+                    $recave = ($participation['recave'] === '' || $participation['recave'] === null) ? 0 : intval($participation['recave']);
+                    $classement_input = $participation['classement'] ?? null;
+                    $classement = ($classement_input === '' || $classement_input === null) ? null : intval($classement_input);
+
+                    // Calculate cout_in = buyin + bounty + rake + (5 if challenger)
+                    $calculated_cout_in = $base_activity_buyin + $raw_bounty + $participation_rake_value + ($challenger ? 5 : 0);
+
+                    // Dans la section de calcul des points et cagnottes
+                    if ($challenger == 1) {
+                        // Points : 1 point de base + 1 pour TF + 1 pour 1ère place
+                        $calculated_points = 1;
+                        if ($tf == 1) $calculated_points += 1;
+                        if ($classement !== null && $classement == 1) $calculated_points += 1;
+                        
+                        // Cagnotte : (Recaves * 3) + 3
+                        $calculated_cagnotte = ($recave * 3) + 3;
+                        // Déduire 3 points si remise utilisée
+                        if (isset($participation['remise']) && $participation['remise']) {
+                            $calculated_cagnotte = max(0, $calculated_cagnotte - 3);
+                        }
+                    }
+
+                    $calculated_points = 0;
+                    if ($challenger == 1) {
+                        $calculated_points = 1;
+                        if ($tf == 1) $calculated_points += 1;
+                        if ($classement !== null && $classement == 1) $calculated_points += 1;
+                    }
+
+                    $calculated_cagnotte = ($challenger == 1) ? (($recave * 3) + 3) : 0;
+                    // Apply remise deduction if remise is checked
+                    if (isset($participation['remise']) && $participation['remise']) {
+                        $calculated_cagnotte = max(0, $calculated_cagnotte - 3);
+                    }
+
+                    $remise = isset($participation['remise']) ? 1 : 0;
+                    mysqli_stmt_bind_param($stmt_update, "iiiddiiidiiii",
+                        $challenger, $table, $siege, $calculated_cout_in,
+                        $participation_rake_value, $recave, $classement, $tf,
+                        $calculated_points,
+                        $calculated_cagnotte,
+                        $remise,
+                        $membre_id, $selected_challenge_id_for_update
+                    );
+
+                    if (!mysqli_stmt_execute($stmt_update)) {
+                        $row_update_errors++;
+                        $batch_error_messages[] = "Erreur MAJ Ligne #$index (Membre ID: $membre_id): " . htmlspecialchars(mysqli_stmt_error($stmt_update));
+                    }
+                } // End foreach
+            } else {
+                 $batch_error_messages[] = "Aucune donnée de participation reçue pour la mise à jour.";
+                 $update_success_overall = false;
+            }
+
+            mysqli_stmt_close($stmt_update);
+
+            if ($update_success_overall) {
+                 if ($row_update_errors == 0) { $_SESSION['feedback'] = "<div class='alert alert-success'>Participations mises à jour avec succès pour l'activité ID {$selected_challenge_id_for_update}.</div>"; }
+                 else { $_SESSION['feedback'] = "<div class='alert alert-warning'>Mise à jour terminée pour l'activité ID {$selected_challenge_id_for_update} avec {$row_update_errors} erreur(s):<br>" . implode("<br>", array_map('htmlspecialchars', $batch_error_messages)) . "</div>"; }
+            }
+
+        } else {
+            $batch_error_messages[] = "Erreur critique de préparation de la requête UPDATE: " . htmlspecialchars(mysqli_error($con));
+            $update_success_overall = false;
+        }
+    }
+
+     if (!$update_success_overall) {
+          $_SESSION['feedback'] = "<div class='alert alert-danger'>Impossible de lancer/terminer la mise à jour :<br>" . implode("<br>", array_map('htmlspecialchars', $batch_error_messages)) . "</div>";
+     }
 
     header("Location: " . $_SERVER['PHP_SELF']);
     exit;
-}
+} // End if (isset($_POST['update_participation']))
 
 
 // --- Retrieve feedback message from session and clear it ---
@@ -255,14 +337,15 @@ $session_feedback = $_SESSION['feedback'] ?? null;
 unset($_SESSION['feedback']);
 
 // --- Variables needed for Price Pool Calculation (Fetch only if an activity is selected) ---
-$selected_activity = isset($_SESSION['selected_activity']) ? intval($_SESSION['selected_activity']) : null;
+$selected_challenge = isset($_SESSION['selected_challenge']) ? intval($_SESSION['selected_challenge']) : null;
+$selected_challenge = isset($_SESSION['selected_challenge']) ? intval($_SESSION['selected_challenge']) : null;
 $activity_buyin_for_pricepool = 0.0; // Initialize
 $total_buyin_sum = 0.0; // Initialize
 $total_recave_sum = 0; // Initialize
 $price_pool = 0.0; // Initialize
 $total_participants = 0; // Initialize for prize pool form
 
-if ($selected_activity !== null) {
+if ($selected_challenge !== null) {
     // Fetch activity buyin for price pool calculation
     $stmt_bp = mysqli_prepare($con, "SELECT buyin FROM activite WHERE `id-activite` = ?");
     if($stmt_bp) {
@@ -325,13 +408,16 @@ if ($selected_activity !== null) {
     <!-- <link href="https://cdn.jsdelivr.net/npm/simple-datatables@latest/dist/style.css" rel="stylesheet" /> -->
     <link rel="stylesheet" href="quick-part-style.css">
     <!-- Specific CSS from original quick-part.php -->
- 
+    <style>
+        /* --- Paste the full responsive CSS from original quick-part.php --- */
+        
+    </style>
 </head>
 <body>
     <div id="app">
-    <?php include('include/sidebar.php'); ?>
-    <div class="app-content">
-    <?php include('/include/header.php'); ?>
+        <?php include('include/sidebar.php'); ?>
+        <div class="app-content">
+            <?php include('include/header.php'); ?>
             <!-- start: MAIN CONTAINER -->
             <div class="main-content" >
                 <div class="wrap-content container" id="container">
@@ -371,11 +457,11 @@ if ($selected_activity !== null) {
                                                     <td>
                                                         <?php
                                                         // Calculate date 7 days ago
-                                                        $three_days_ago = date('Y-m-d', strtotime('-30 days', strtotime($actu2)));
+                                                        $three_days_ago = date('Y-m-d', strtotime('-7 days', strtotime($actu2)));
                                                         $safe_three_days_ago_date = mysqli_real_escape_string($con, $three_days_ago);
 
                                                         // Modify query to include last 3 days
-                                                        $acti_query = mysqli_query($con, "SELECT `id-activite`,`titre-activite`,`date_depart` FROM `activite` WHERE (`date_depart` >= '$safe_three_days_ago_date') ORDER BY `date_depart` DESC");
+                                                        $acti_query = mysqli_query($con, "SELECT `id-activite`,`titre-activite`,`date_depart` FROM `activite` WHERE (`date_depart` >= '$safe_three_days_ago_date') ORDER BY `date_depart` ASC");
                                                         echo "<select name='acti' class='form-control'>";
                                                         echo "<option value='-Anonyme-'>-- Afficher Toutes --</option>";
                                                         $current_selected_activity = isset($_SESSION['selected_activity']) ? $_SESSION['selected_activity'] : null;
@@ -400,6 +486,126 @@ if ($selected_activity !== null) {
                                         </form>
                                     </div>
                                 </div>
+
+                                <!-- Challenge Selection Form -->
+<div class="panel panel-white card">
+    <div class="panel-body">
+        <h2>Filtrer par Challenge</h2>
+        <form method="post">
+            <table class="simple-form-table">
+                <tr>
+                    <th>Challenge</th>
+                    <td>
+                        <?php
+                        // Requête pour récupérer les challenges actifs et à venir
+                        // Supprimer ce bloc entier :
+                        /* 
+                        <!-- Activity Selection Form -->
+                        <div class="panel panel-white card">
+                            <div class="panel-body">
+                                <h2>Filtrer par Activité</h2>
+                                <form method="post">
+                                    <table class="simple-form-table">
+                                        <tr>
+                                            <th>Activité</th>
+                                            <td>
+                                                <?php
+                                                // Calculate date 7 days ago
+                                                $three_days_ago = date('Y-m-d', strtotime('-7 days', strtotime($actu2)));
+                                                $safe_three_days_ago_date = mysqli_real_escape_string($con, $three_days_ago);
+                        
+                                                // Modify query to include last 3 days
+                                                $acti_query = mysqli_query($con, "SELECT `id-activite`,`titre-activite`,`date_depart` FROM `activite` WHERE (`date_depart` >= '$safe_three_days_ago_date') ORDER BY `date_depart` ASC");
+                                                echo "<select name='acti' class='form-control'>";
+                                                echo "<option value='-Anonyme-'>-- Afficher Toutes --</option>";
+                                                ... reste du code ...
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </form>
+                            </div>
+                        </div>
+                        */                        // Supprimer ce bloc
+                        /*
+                        // --- Handle Activity Choice Submission ---
+                        if (isset($_POST['submitchoixact'])) {
+                            $acti_choice = $_POST['acti'];
+                            if ($acti_choice != '-Anonyme-' && filter_var($acti_choice, FILTER_VALIDATE_INT)) {
+                                $_SESSION['selected_activity'] = intval($acti_choice);
+                            } else {
+                                 unset($_SESSION['selected_activity']);
+                            }
+                            header("Location: " . $_SERVER['PHP_SELF']);
+                            exit;
+                        }
+                        */                        // Supprimer ou remplacer les lignes suivantes
+                        /*
+                        $selected_activity = isset($_SESSION['selected_activity']) ? intval($_SESSION['selected_activity']) : null;
+                        $selected_activity_id = isset($_SESSION['selected_activity']) ? intval($_SESSION['selected_activity']) : null;
+                        */
+                        
+                        // Remplacer par
+                        $selected_challenge = isset($_SESSION['selected_challenge']) ? intval($_SESSION['selected_challenge']) : null;                        // Remplacer toutes les occurrences de
+                        if ($selected_activity !== null)
+                        
+                        // Par
+                        if ($selected_challenge !== null)
+                        
+                        // Et remplacer
+                        $selected_activity_id_for_update = isset($_SESSION['selected_activity']) ? intval($_SESSION['selected_activity']) : null;
+                        
+                        // Par
+                        $selected_challenge_id_for_update = isset($_SESSION['selected_challenge']) ? intval($_SESSION['selected_challenge']) : null;                        $challenge_query = mysqli_query($con, "SELECT 
+                            c.id_challenge, 
+                            c.titre_challenge, 
+                            c.chal_deb,
+                            c.chal_fin,
+                            c.chal_com,
+                            COUNT(p.`id-participation`) as nb_participants
+                            FROM challenge c 
+                            LEFT JOIN participation p ON c.id_challenge = p.id_challenge
+                            WHERE c.chal_fin >= CURDATE() 
+                            GROUP BY c.id_challenge
+                            ORDER BY c.chal_deb ASC");
+                        
+                        echo "<select name='challenge' class='form-control'>";
+                        echo "<option value='-Anonyme-'>-- Sélectionner un Challenge --</option>";
+                        
+                        $current_selected_challenge = isset($_SESSION['selected_challenge']) ? 
+                            $_SESSION['selected_challenge'] : null;
+                        
+                        if ($challenge_query) {
+                            while ($challenge = mysqli_fetch_assoc($challenge_query)) {
+                                $selected = ($challenge["id_challenge"] == $current_selected_challenge) ? 
+                                    ' selected' : '';
+                                $date_debut = date("d/m/Y", strtotime($challenge["chal_deb"]));
+                                $date_fin = date("d/m/Y", strtotime($challenge["chal_fin"]));
+                                $nb_participants = $challenge["nb_participants"] ?: 0;
+                                
+                                echo "<option value='" . htmlspecialchars($challenge["id_challenge"]) . 
+                                    "'$selected>" . htmlspecialchars($challenge["titre_challenge"]) .
+                                    " ($date_debut - $date_fin)" .
+                                    " - $nb_participants participants" .
+                                    " - " . htmlspecialchars($challenge["chal_com"]) . "</option>";
+                            }
+                            mysqli_free_result($challenge_query);
+                        } else {
+                            echo "<option value=''>Erreur chargement challenges</option>";
+                        }
+                        echo "</select>";
+                        ?>
+                    </td>
+                    <td class="btn-container-cell">
+                        <div class="btn-container">
+                            <button type="submit" class="btn btn-primary-orange2" 
+                                name="submitchoixchallenge">Filtrer</button>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </form>
+    </div>
+</div>
 
                                 <!-- Quick Player Creation Form -->
                                 <div class="panel panel-white card">
@@ -477,15 +683,11 @@ if ($selected_activity !== null) {
                                                     <td>
                                                         <?php
                                                         $membres_reg = mysqli_query($con, "SELECT `id-membre`,`pseudo` FROM `membres` ORDER BY `pseudo` ASC");
-                                                        echo "<select name='membre' id='membre_select' class='form-control' required>
-                                                            <option value=''>-- Sélectionner Pseudo --</option>";
+                                                        echo "<select name='membre' class='form-control' required><option value=''>-- Sélectionner Pseudo --</option>";
                                                         if ($membres_reg) {
-                                                            while ($choix = mysqli_fetch_assoc($membres_reg)) {
-                                                                echo "<option value='" . htmlspecialchars($choix["id-membre"]) . "'>" 
-                                                                    . htmlspecialchars($choix["pseudo"]) . "</option>";
-                                                            }
-                                                            mysqli_free_result($membres_reg);
-                                                        }
+                                                            while ($choix = mysqli_fetch_assoc($membres_reg)) { echo "<option value='" . htmlspecialchars($choix["id-membre"]) . "'>" . htmlspecialchars($choix["pseudo"]) . "</option>"; }
+                                                             mysqli_free_result($membres_reg);
+                                                        } else { echo "<option value=''>Erreur chargement</option>"; }
                                                         echo "</select>";
                                                         ?>
                                                     </td>
@@ -538,7 +740,7 @@ if ($selected_activity !== null) {
                                                            <button type="submit" class="btn btn-primary-orange2" name="submit" <?php echo $selected_activity === null ? 'disabled' : ''; ?>>Inscrire Joueur</button>
                                                          </div>
                                                     </td>
-                                                 </tr>
+                                                </tr>
                                             </table>
                                         </form>
                                     </div>
@@ -643,7 +845,6 @@ if ($selected_activity !== null) {
                                         <th class="cell-right">Pts</th>
                                         <th class="cell-center">Remise</th>
                                         <th class="cell-right">Cagnotte</th>
-                                        <th class="cell-right">Gain</th>
                                     </tr>
                                                     </thead>
                                                     <tbody>
@@ -651,22 +852,17 @@ if ($selected_activity !== null) {
                                                         // $selected_activity defined earlier
                                                         // $data_found, totals initialized above
 
-                                                        $query_list = "SELECT 
-    p.`id-membre`, m.pseudo, p.`id-activite`, a.`titre-activite`, a.`date_depart`,
-    p.`id-table`, p.`id-siege`, p.challenger, p.recave, p.classement,
-    p.cout_in, p.rake AS participation_rake, a.bounty,
-    p.points, p.cagnotte, p.tf, p.remise, a.buyin AS activite_buyin,
-    COALESCE(p.gain, 0) as gain,  # Ajout ici
-    p.`id-participation`
-FROM participation p
-JOIN membres m ON p.`id-membre` = m.`id-membre`
-JOIN activite a ON p.`id-activite` = a.`id-activite`";
+                                                        $query_list = "SELECT p.*, m.pseudo, c.titre-challenge as titre, 
+               c.date_debut, c.date_fin, c.pot
+               FROM participation p
+               JOIN membres m ON p.id-membre = m.id-membre
+               JOIN challenge c ON p.id-challenge = c.id-challenge";
 
                                                         $safe_actu2_date = mysqli_real_escape_string($con, $actu2);
                                                         $participants_in_list = 0; // Counter for displayed rows
 
-                                                        if ($selected_activity !== null) {
-                                                            $query_list .= " WHERE p.`id-activite` = ?";
+                                                        if ($selected_challenge !== null) {
+                                                            $query_list .= " WHERE p.id-challenge = ?";
                                                         } else {
                                                             $query_list .= " WHERE a.`date_depart` >= '$safe_actu2_date'";
                                                         }
@@ -676,8 +872,8 @@ JOIN activite a ON p.`id-activite` = a.`id-activite`";
                                                         $stmt_list = mysqli_prepare($con, $query_list);
 
                                                         if ($stmt_list) {
-                                                            if ($selected_activity !== null) {
-                                                                mysqli_stmt_bind_param($stmt_list, "i", $selected_activity);
+                                                            if ($selected_challenge !== null) {
+                                                                mysqli_stmt_bind_param($stmt_list, "i", $selected_challenge);
                                                             }
 
                                                             if (mysqli_stmt_execute($stmt_list)) {
@@ -703,7 +899,7 @@ JOIN activite a ON p.`id-activite` = a.`id-activite`";
                                                                             // Output 13 cells to match header count, avoiding colspan in tbody
                                                                             echo '<tr class="activity-header">';
                                                                             echo '  <td style="font-weight: bold; background-color: #e9ecef !important;">Activité: ' . htmlspecialchars($row['titre-activite']) . ' (' . $formatted_date_header . ') - ID: ' . $row['id-activite'] . '</td>'; // Style added to mimic header
-                                                                            for ($i = 0; $i < 12; $i++) { echo '<td style="background-color: #e9ecef !important;"></td>'; } // Add 12 empty styled cells
+                                                                            for ($i = 0; i < 12; $i++) { echo '<td style="background-color: #e9ecef !important;"></td>'; } // Add 12 empty styled cells
                                                                             echo '</tr>';
                                                                             $current_activity_header = $row['id-activite'];
                                                                         }
@@ -786,17 +982,6 @@ JOIN activite a ON p.`id-activite` = a.`id-activite`";
                                         $remise_checked = $row['remise'] ? 'checked' : '';
                                         echo "<td class='cell-center'><span class='sort-value' style='display: none;'>" . $row['remise'] . "</span><input type='checkbox' name='participations[$index][remise]' value='1' $remise_checked " . ($selected_activity ? '' : ' disabled') . "></td>";
                                         echo "<td class='cell-center'><span class='sort-value' style='display: none;'>" . $raw_cagnotte . "</span><input type='number' name='participations[$index][cagnotte_display]' value='" . htmlspecialchars((string)$raw_cagnotte) . "' step='1' placeholder='0' readonly title='Calc: Si Ch.=(Recave*3)+3, sinon 0'></td>";
-                                        // Column: Gain
-                                        echo "<td class='cell-right'>";
-                                        echo "<input type='number' 
-                                            name='participations[$index][gain]' 
-                                            value='" . number_format(floatval($row['gain']), 2, '.', '') . "' 
-                                            class='gain-input'
-                                            style='width: 80px;' 
-                                            step='0.01' " . 
-                                            ($selected_activity ? '' : ' disabled') . ">";
-                                        echo "<input type='hidden' name='participations[$index][id_participation]' value='" . $row['id-participation'] . "'>";
-                                        echo "</td>";
                                                                         echo "</tr>";
                                                                         $index++;
                                                                     }
@@ -854,37 +1039,16 @@ JOIN activite a ON p.`id-activite` = a.`id-activite`";
                                                              <td></td>
                                                              <td class="cell-center">0</td>
                                                              <td class="cell-right"><?php echo "C = C + ".$total_cagnotte; ?></td>
-                                                             <td class="cell-right">
-                                                                <?php 
-                                                                    $total_gains = 0;
-                                                                    if (isset($result)) {
-                                                                        // Réexécuter la requête pour les totaux
-                                                                        $stmt_total = mysqli_prepare($con, "SELECT SUM(COALESCE(gain, 0)) as total_gains 
-                                                                            FROM participation 
-                                                                            WHERE `id-activite` = ?");
-                                                                        if ($stmt_total) {
-                                                                            mysqli_stmt_bind_param($stmt_total, "i", $selected_activity);
-                                                                            mysqli_stmt_execute($stmt_total);
-                                                                            $result_total = mysqli_stmt_get_result($stmt_total);
-                                                                            if ($row_total = mysqli_fetch_assoc($result_total)) {
-                                                                                $total_gains = floatval($row_total['total_gains']);
-                                                                            }
-                                                                            mysqli_free_result($result_total);
-                                                                            mysqli_stmt_close($stmt_total);
-                                                                        }
-                                                                    }
-                                                                    echo number_format($total_gains, 2, ',', ' ') . ' €';
-                                                                ?>
-                                                            </td>
                                                          </tr>
-                                                         <tr>
-                                                            <td colspan="15" class="text-center">
-                                                                <input type="hidden" name="update_participation" value="1">
-                                                                <button type="submit" class="btn btn-primary-orange2">
-                                                                    Mettre à jour les Participations
+                                                         <?php if ($selected_activity): // Show Update button only if activity is selected ?>
+                                                         <tr >
+                                                           <td colspan="13" class="update-button-cell">
+                                                                <button type="submit" name="update_participation" class="btn btn-primary-orange2">
+                                                                    Mettre à jour les Participations Sélectionnées
                                                                 </button>
-                                                            </td>
+                                                           </td>
                                                         </tr>
+                                                        <?php endif; ?>
                                                      </tfoot>
                                                      <?php endif; // End if($data_found) ?>
                                                 </table>
@@ -1011,7 +1175,7 @@ JOIN activite a ON p.`id-activite` = a.`id-activite`";
                         echo "<tr>";
                         echo "<th class='cell-center'>Position</th>";
                         echo "<th>Joueur</th>";
-                        echo "<th class='cell-center'>Challenge</th>";
+                        echo "<th class='cell-center'>Ch.</th>";
                         echo "<th class='cell-center'>TF</th>";
                         echo "<th class='cell-right'>Points</th>";
                         echo "</tr>";
@@ -1066,8 +1230,8 @@ JOIN activite a ON p.`id-activite` = a.`id-activite`";
                 </div>
             </div>
             <!-- end: MAIN CONTAINER -->
-    <?php include('include/footer.php'); ?>
-    <?php include('include/setting.php'); ?>
+            <?php include('include/footer.php'); ?>
+            <?php include('include/setting.php'); ?>
         </div>
     </div><!-- /app -->
 
@@ -1098,59 +1262,45 @@ JOIN activite a ON p.`id-activite` = a.`id-activite`";
             Main.init();
             FormElements.init();
 
-            // Ajout de la variable manquante
-            const isAllActivitiesView = <?php echo isset($_SESSION['selected_activity']) ? 'false' : 'true'; ?>;
-            const occupiedSeats = <?php echo isset($occupied_seats_json) ? $occupiedSeats_json : '[]'; ?>;
-
-            // Initialize DataTables with row filtering
-            if ($('.data-table').length > 0) {
-                $('.data-table').DataTable({
-                    "paging": false,
-                    "info": false,
+            // Initialize DataTables ONLY if a single activity is selected
+            // Check if the table exists AND if we are NOT in the 'All Activities' view
+            if ($('.data-table').length > 0 && !isAllActivitiesView) {
+                // Initialize DataTables with sorting enabled, relying on data-sort attributes
+                 $('.data-table').DataTable({
+                    "paging": false, // Disable pagination
+                    "info": false,   // Disable info text
                     "language": {
                         "search": "Rechercher Joueur:",
                         "zeroRecords": "Aucun joueur trouvé",
                         "emptyTable": "Aucune participation à afficher"
                     },
-                    "ordering": true,
+                    "ordering": true, // Keep sorting enabled
                     "columnDefs": [
+                        // Disable sorting for specific columns
                         { "orderable": false, "targets": [0, 2, 3] },
+                        // Define orthogonal data rendering for numeric columns (4-10)
+                        // Use the hidden span's text for sorting and type detection
                         {
-                            "targets": [4, 5, 6, 7, 8, 9, 10, -1],
-                            "render": function(data, type, row) {
-                                if (type === 'sort' || type === 'type') {
-                                    const value = $(data).find('input').val();
-                                    return parseFloat(value) || 0;
+                            "targets": [4, 5, 6, 7, 8, 9, 10], // Columns with hidden spans
+                            "render": function ( data, type, row ) {
+                                if ( type === 'sort' || type === 'type' ) {
+                                    // Find the hidden span and return its text content
+                                    var hiddenValue = $(data).find('.sort-value').text();
+                                    // Convert to number for correct numeric sorting
+                                    return Number(hiddenValue);
                                 }
+                                // For display and other types, return the original cell data (which includes the input)
                                 return data;
                             }
                         }
                     ],
-                    "order": [[0, "desc"], [1, "asc"]],
-                    "initComplete": function() {
-                        // Add filter inputs for each column
-                        this.api().columns().every(function() {
-                            var column = this;
-                            var header = $(column.header());
-                            
-                            // Skip filter for certain columns
-                            if (header.hasClass('cell-center') || header.hasClass('cell-right')) {
-                                return;
-                            }
-                            
-                            var input = $('<input type="text" placeholder="Filtrer..." style="width:100%"/>')
-                                .appendTo(header)
-                                .on('keyup change', function() {
-                                    if (column.search() !== this.value) {
-                                        column.search(this.value).draw();
-                                    }
-                                });
-                        });
-                    }
+                    // Default sort: Challenger DESC (col 0), then Player Name ASC (col 1)
+                    "order": [[ 0, "desc" ], [ 1, "asc" ]]
                 });
             }
 
             // Specific JS from original quick-part.php for seat selection
+            const occupiedSeats = <?php echo $occupied_seats_json; ?>;
             const tableSelect = document.getElementById('table_reg_select');
             const siegeSelect = document.getElementById('siege_reg_select');
             // const activitySelect = document.getElementById('acti_reg_select'); // Not needed if relying on filter button
@@ -1211,86 +1361,7 @@ JOIN activite a ON p.`id-activite` = a.`id-activite`";
                 updateSiegeOptions();
             }
 
-    // Initialize alpha keyboard
-    function initAlphaKeyboard() {
-        const keyboard = $('.alpha-keyboard');
-        const keys = $('.alpha-key');
-        const membreSelect = $('#membre_select');
-        
-        // Ensure keyboard is visible and interactive
-        keyboard.css({
-            'display': 'flex',
-            'pointer-events': 'auto'
         });
-
-        // Bind click handlers
-        keys.off('click').on('click', function() {
-            const selectedLetter = $(this).data('letter').toUpperCase();
-            console.log('Key clicked:', selectedLetter, this);
-
-            // Visual feedback
-            keys.removeClass('active');
-            $(this).addClass('active');
-            console.log('Active state applied to:', this);
-
-                // Iterate through options and show/hide based on the selected letter
-                let visibleCount = 0;
-                membreSelect.find('option').each(function() {
-                    const option = $(this);
-                    const pseudo = option.text().toUpperCase();
-                    
-                    // Always show the default "Select Pseudo" option
-                    if (option.val() === '') {
-                        option.show();
-                        return true;
-                    }
-
-                    if (selectedLetter === '') {
-                        // Show all options if "Tous" is clicked
-                        option.show();
-                        visibleCount++;
-                    } else {
-                        // Hide options that don't start with the selected letter
-                        if (pseudo.startsWith(selectedLetter)) {
-                            option.show();
-                            visibleCount++;
-                            console.log('Showing:', option.text());
-                        } else {
-                            option.hide();
-                        }
-                    }
-                });
-
-                console.log('Total visible options:', visibleCount);
-                
-                // Reset the select value if the currently selected option is hidden
-                if (membreSelect.find('option:selected').is(':hidden')) {
-                    membreSelect.val('');
-                }
-                
-                // Refresh select2 if it exists
-                if (membreSelect.hasClass('select2-hidden-accessible')) {
-                    membreSelect.select2();
-                }
-            });
-
-    // Pour le bouton "Tous"
-    $('.alpha-key-special').on('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        $('.alpha-key').removeClass('active');
-        $(this).addClass('active');
-        $('#membre_select option').show();
-        $('#membre_select').val('').focus();
-    });
-        });
-        
-    // Add sidebar toggle functionality using event delegation
-    $(document).on('click', '.sidebar-toggler', function(e) {
-        e.preventDefault();
-        $('#app').toggleClass('app-sidebar-closed');
-    });
     </script>
 </body>
 </html>
