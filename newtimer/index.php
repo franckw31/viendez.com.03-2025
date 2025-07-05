@@ -832,7 +832,7 @@ echo "<script>const WS_HOST = '$wsHost';</script>";
             { level: 3, small_blind: 300, big_blind: 600, ante: 0, duration: 900 },
             { level: 4, small_blind: 400, big_blind: 800, ante: 0, duration: 900 },
             { level: 5, small_blind: 500, big_blind: 1000, ante: 0, duration: 900 },
-            { level: 6, small_blind: 6500, big_blind: 1200, ante: 0, duration: 900 },
+            { level: 6, small_blind: 600, big_blind: 1200, ante: 0, duration: 900 },
             { level: 6, small_blind: 800, big_blind: 1600, ante: 0, duration: 900 },
             { level: 7, small_blind: 1000, big_blind: 2000, ante: 0, duration: 900 },
             { level: 8, small_blind: 0, big_blind: 0, ante: 0, duration: 600 },
