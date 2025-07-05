@@ -31,23 +31,13 @@ if (strlen($_SESSION['id']) == 0) {
         
         $id_challenge = isset($_POST['id_challenge']) ? (int)$_POST['id_challenge'] : getCurrentMonthChallengeId();
         $where_clause = $id_challenge > 0 ? "WHERE c.id_challenge = $id_challenge" : "";
-
-        // Ajout du filtre sur la date
-        $today = date('Y-m-d');
-        if ($where_clause) {
-            $where_clause .= " AND a.date_depart < '$today'";
-        } else {
-            $where_clause = "WHERE a.date_depart < '$today'";
-        }
-
+        
         $query = "SELECT 
                     m.`id-membre`, 
                     m.pseudo,
                     COUNT(p.`id-participation`) as nb_participations,
                     SUM(p.tf) as tf,
-                    SUM(p.win) as classement,
                     (SUM(p.gain) / 10) as cagnotte,
-                    SUM(p.points) as points,
                     GROUP_CONCAT(DISTINCT a.`titre-activite` ORDER BY a.`titre-activite` ASC) as activites,
                     GROUP_CONCAT(DISTINCT c.titre_challenge ORDER BY c.titre_challenge ASC) as challenges
                 FROM membres m
@@ -56,8 +46,8 @@ if (strlen($_SESSION['id']) == 0) {
                 LEFT JOIN challenge c ON a.`id_challenge` = c.id_challenge
                 $where_clause
                 GROUP BY m.`id-membre`, m.pseudo
-                HAVING points > 0
-                ORDER BY points DESC, classement DESC, tf DESC, nb_participations DESC";
+                HAVING cagnotte > 0
+                ORDER BY cagnotte DESC";
         
         $result = mysqli_query($conn, $query);
         if (!$result) {
@@ -633,10 +623,10 @@ if (strlen($_SESSION['id']) == 0) {
                                                                                     <th class="col-pseudo">Pseudo</th>
                                                                                     <th class="col-center col-small">Participations</th>
                                                                                     <th class="col-center col-small">Nb ITM</th>
-                                                                                    <th class="col-center col-small">Victoires</th>
-                                                                                    <th class="col-number col-small">Points</th> <!-- Ajouté ici -->
-                                                                                    <th class="col-number col-small">Cagnotte</th>
+                                                                                    <th class="col-number col-small">Nb Points</th>
                                                                                     <th class="col-number col-small">Jetons</th>
+                                                                                    <th>Activités</th>
+                                                                                    <th>Challenges</th>
                                                                                 </tr>
                                                                             </thead>
                                                                             <tbody>
@@ -649,24 +639,24 @@ if (strlen($_SESSION['id']) == 0) {
                                                                                             $row['pseudo'] ?></td>
                                                                                     <td class="col-center"><?= $row['nb_participations'] ?? 0 ?></td>
                                                                                     <td class="col-center"><?= $row['tf'] ?? 0 ?></td>
-                                                                                    <td class="col-center"><?= $row['classement'] ?? 0 ?></td>
-                                                                                    <td class="col-number"><?= $row['points'] ?></td> <!-- Ajouté ici -->
                                                                                     <td class="col-number"><?= $row['cagnotte'] ?></td>
                                                                                     <td class="col-number"><?= number_format($row['jetons'], 0, ',', ' ') ?></td>
+                                                                                    <td><?= $row['activites'] ?></td>
+                                                                                    <td><?= $row['challenges'] ?></td>
                                                                                 </tr>
                                                                                 <?php endforeach; ?>
                                                                             </tbody>
                                                                             <tfoot>
                                                                                 <tr>
-                                                                                    <th>#</th>
-                                                                                    <th style="display:none;">ID</th>
-                                                                                    <th style="text-align:right">Total:</th>
-                                                                                    <th></th> <!-- Participations -->
-                                                                                    <th></th> <!-- Nb ITM -->
-                                                                                    <th></th> <!-- Victoires -->
-                                                                                    <th></th> <!-- Points -->
-                                                                                    <th></th> <!-- Cagnotte -->
-                                                                                    <th></th> <!-- Jetons -->
+                                                                                    <th>#</th>                               <!-- colonne 0 -->
+                                                                                    <th style="display:none;">ID</th>        <!-- colonne 1 -->
+                                                                                    <th style="text-align:right">Total:</th> <!-- colonne 2 -->
+                                                                                    <th></th>                                <!-- colonne 3 - Participations -->
+                                                                                    <th></th>                                <!-- colonne 4 - TF -->
+                                                                                    <th></th>                                <!-- colonne 5 - Cagnotte -->
+                                                                                    <th></th>                                <!-- colonne 6 - Jetons -->
+                                                                                    <th></th>                                <!-- colonne 7 - Activités -->
+                                                                                    <th></th>                                <!-- colonne 8 - Challenges -->
                                                                                 </tr>
                                                                             </tfoot>
                                                                         </table>
@@ -729,19 +719,19 @@ if (strlen($_SESSION['id']) == 0) {
                 dom: '<"row"<"col"B><"col"f>>rt<"row"<"col"i><"col"p>>',
                 buttons: ['copy', 'excel', 'pdf', 'print'],
                 pageLength: 15,
-                order: [[6, 'desc']], // Tri par Points décroissant (colonne 6 = Points)
+                order: [[5, 'desc']], // Tri par Cagnotte décroissant
                 columnDefs: [
                     { 
                         searchable: false, 
-                        orderable: true, 
+                        orderable: false, 
                         targets: 0,
                         className: 'col-number-small' 
                     },
-                    { visible: false, targets: [1] }, // Cache seulement ID
-                    { className: 'col-center col-small', targets: [3, 4, 5] },
-                    { className: 'col-number col-small', targets: [6, 7, 8] },
+                    { visible: false, targets: [1, 7, 8] }, // Cache ID, Activités et Challenges
+                    { className: 'col-center col-small', targets: [3, 4] },
+                    { className: 'col-number col-small', targets: [5, 6] },
                     { 
-                        targets: 7, // Cagnotte
+                        targets: 5,
                         render: function(data, type, row) {
                             if (type === 'display') {
                                 return data.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") + ' ';
@@ -750,7 +740,7 @@ if (strlen($_SESSION['id']) == 0) {
                         }
                     },
                     { 
-                        targets: 8, // Jetons
+                        targets: 6,
                         render: function(data, type, row) {
                             if (type === 'display') {
                                 return data.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
@@ -762,7 +752,7 @@ if (strlen($_SESSION['id']) == 0) {
                 responsive: true,
                 footerCallback: function(row, data, start, end, display) {
                     var api = this.api();
-
+                    
                     // Applique les largeurs des colonnes
                     $(row).find('th').each(function(i) {
                         $(this).css('width', $(api.column(i).header()).width());
@@ -776,55 +766,29 @@ if (strlen($_SESSION['id']) == 0) {
                     // TF total (colonne 4)
                     var tfTotal = api.column(4, {search:'applied'}).data()
                         .reduce((a, b) => parseInt(a || 0) + parseInt(b || 0), 0);
-                    $(api.column(4).footer())
-                        .html(tfTotal)
-                        .removeClass('col-center')
-                        .addClass('col-number'); // <-- aligner à droite
+                    $(api.column(4).footer()).html(tfTotal);
 
-                    // Points total (colonne 6)
-                    var pointsTotal = api.column(6, {search:'applied'}).data()
+                    // Cagnotte total (colonne 5)
+                    var cagnotteTotal = api.column(5, {search:'applied'}).data()
                         .reduce((a, b) => {
                             a = parseFloat(a.toString().replace(' ', '').replace(',', '.')) || 0;
                             b = parseFloat(b.toString().replace(' ', '').replace(',', '.')) || 0;
                             return a + b;
                         }, 0);
-                    $(api.column(6).footer()).html(pointsTotal.toFixed(2).replace('.', ',') + ' ');
+                    $(api.column(5).footer()).html(cagnotteTotal.toFixed(2).replace('.', ',') + ' ');
 
-                    // Cagnotte total (colonne 7)
-                    var cagnotteTotal = api.column(7, {search:'applied'}).data()
-                        .reduce((a, b) => {
-                            a = parseFloat(a.toString().replace(' ', '').replace(',', '.')) || 0;
-                            b = parseFloat(b.toString().replace(' ', '').replace(',', '.')) || 0;
-                            return a + b;
-                        }, 0);
-                    $(api.column(7).footer()).html(cagnotteTotal.toFixed(2).replace('.', ',') + ' ');
-
-                    // Jetons total (colonne 8)
-                    var jetonsTotal = api.column(8, {search:'applied'}).data()
+                    // Jetons total (colonne 6)
+                    var jetonsTotal = api.column(6, {search:'applied'}).data()
                         .reduce((a, b) => {
                             a = parseInt(a.toString().replace(/\s/g, '')) || 0;
                             b = parseInt(b.toString().replace(/\s/g, '')) || 0;
                             return a + b;
                         }, 0);
-                    $(api.column(8).footer()).html(number_format(jetonsTotal, 0, ',', ' '));
-
-                    // VICTOIRES total (colonne 5)
-                    var victoiresTotal = api.column(5, {search:'applied'}).data()
-                        .reduce((a, b) => parseInt(a || 0) + parseInt(b || 0), 0);
-                    $(api.column(5).footer())
-                        .html(victoiresTotal)
-                        .addClass('col-number'); // aligner à droite
-
-                    // Total classement (colonne 5)
-                    var classementTotal = api.column(5, {search:'applied'}).data()
-                        .reduce((a, b) => parseInt(a || 0) + parseInt(b || 0), 0);
-                    $(api.column(5).footer())
-                        .html(classementTotal)
-                        .addClass('col-number'); // aligner à droite
+                    $(api.column(6).footer()).html(number_format(jetonsTotal, 0, ',', ' '));
 
                     // Applique le formatage des totaux
                     $(api.column(3).footer()).addClass('col-center');
-                    $(api.column(4).footer()).addClass('col-number'); // <-- aligner à droite pour Nb ITM
+                    $(api.column(4).footer()).addClass('col-center');
                     $(api.column(5).footer()).addClass('col-number');
                     $(api.column(6).footer()).addClass('col-number');
                 }
