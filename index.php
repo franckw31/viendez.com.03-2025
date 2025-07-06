@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (isset($_SESSION['id'])) {
-    header("Location: index.html");
+    header("Location: /panel/dashboard.php");
     die();
 };
 if (isset($_POST['login'])) {
@@ -27,7 +27,7 @@ if ($count == 1) {
     $_SESSION['user'] = $username;
     $_SESSION['login'] = $username;
     $_SESSION['id'] = $id;
-    header("Location: index.html");
+    header("Location: /panel/dashboard.php");
 }
 ;
 ?>

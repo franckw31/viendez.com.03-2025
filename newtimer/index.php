@@ -310,67 +310,91 @@ echo "<script>const WS_HOST = '$wsHost';</script>";
     }
 
     /* Edit Panel */
-    .edit-panel, .load-panel {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.9);
-        padding: 20px;
-        z-index: 1000;
-        overflow-y: auto;
-    }
+        .edit-panel, .load-panel {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 20px;
+            z-index: 1000;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
 
-    .edit-content, .load-content {
-        background: #1E1E1E;
-        padding: 20px;
-        border-radius: 15px;
-        max-width: 600px;
-        margin: 20px auto;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-    }
+        .edit-content, .load-content {
+            background: #1E1E1E;
+            padding: 20px;
+            border-radius: 15px;
+            max-width: 600px;
+            margin: 20px auto;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+            width: calc(100% - 40px);
+            box-sizing: border-box;
+        }
 
     /* Blind Editor */
     .blind-headers {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 10px;
-        margin: 10px 0;
+        grid-template-columns: repeat(4, minmax(80px, 1fr));
+        gap: 8px;
+        margin: 8px 0;
         font-weight: bold;
         color: #90CAF9;
-        padding: 0 10px;
+        padding: 0 8px;
+        font-size: 14px;
     }
 
     .blind-editor {
         margin: 20px 0;
-        padding: 10px;
-        background: rgba(255,255,255,0.05);
-        border-radius: 8px;
+        padding: 15px;
+        background: rgba(30, 30, 30, 0.9);
+        border-radius: 10px;
+        border: 1px solid rgba(255,255,255,0.1);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
     }
 
     .blind-row {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 10px;
-        margin: 10px 0;
+        grid-template-columns: repeat(4, minmax(80px, 1fr));
+        gap: 8px;
+        margin: 6px 0;
+        padding: 8px;
         position: relative;
         align-items: center;
+        background: rgba(255,255,255,0.05);
+        border-radius: 6px;
+        transition: all 0.2s ease;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .blind-row:hover {
+        background: rgba(255,255,255,0.08);
     }
 
     .blind-row input {
         width: 100%;
         padding: 8px;
-        background: #333;
-        border: 1px solid #555;
-        border-radius: 4px;
+        background: rgba(0,0,0,0.3);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 6px;
         color: white;
-        font-size: 16px;
+        font-size: 14px;
         box-sizing: border-box;
         -webkit-appearance: none;
         margin: 0;
         -moz-appearance: textfield;
+        transition: all 0.2s ease;
+    }
+
+    .blind-row input:focus {
+        outline: none;
+        border-color: #2196F3;
+        box-shadow: 0 0 0 2px rgba(33,150,243,0.3);
+        background: rgba(0,0,0,0.5);
     }
 
     .blind-row input:focus {
@@ -379,13 +403,25 @@ echo "<script>const WS_HOST = '$wsHost';</script>";
         box-shadow: 0 0 0 2px rgba(33,150,243,0.2);
     }
 
+    .blind-row.highlighted {
+        background-color: rgba(33, 150, 243, 0.2);
+        border-radius: 4px;
+        box-shadow: 0 0 0 2px rgba(33,150,243,0.5);
+    }
+
     /* Remove Button */
-    .remove-btn {
-        position: absolute;
-        right: -30px;
-        width: 24px;
-        height: 24px;
-        background: #F44336;
+        .row-actions {
+            display: flex;
+            gap: 5px;
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+    .insert-btn, .remove-btn {
+        width: 32px;
+        height: 32px;
         color: white;
         border-radius: 50%;
         display: flex;
@@ -393,14 +429,64 @@ echo "<script>const WS_HOST = '$wsHost';</script>";
         justify-content: center;
         cursor: pointer;
         font-size: 18px;
+        font-weight: bold;
         transition: all 0.3s ease;
         min-width: 44px;
         min-height: 44px;
+        border: none;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .insert-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+
+    .remove-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+
+    .insert-btn {
+        background-color: #4CAF50;
+    }
+
+    .insert-btn:hover {
+        background-color: #388E3C;
+    }
+
+    .remove-btn {
+        background-color: #F44336;
     }
 
     .remove-btn:hover {
         background: #D32F2F;
         transform: scale(1.1);
+    }
+
+    .insert-btn {
+        background-color: #4CAF50;
+        width: 32px;
+        height: 32px;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 18px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        min-width: 44px;
+        min-height: 44px;
+        border: none;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .insert-btn:hover {
+        background-color: #388E3C;
+        transform: scale(1.1);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
     }
 
     /* Structure Items */
@@ -1227,29 +1313,72 @@ function renderBlindEditor() {
     `;
 
     const rows = blindLevels.map((level, index) => `
-        <div class="blind-row" data-level="${index + 1}">
-            <input type="number" value="${level.small_blind}" min="0" step="25" class="small-blind">
-            <input type="number" value="${level.big_blind}" min="0" step="50" class="big-blind">
-            <input type="number" value="${level.ante}" min="0" step="25" class="ante">
-            <input type="number" value="${level.duration / 60}" min="1" max="60" class="duration">
-            ${index > 0 ? `<div class="remove-btn" onclick="removeLevel(${index})">×</div>` : ''}
-        </div>
+                <div class="blind-row" data-level="${index + 1}">
+                    <input type="number" value="${level.small_blind}" min="0" step="25" class="small-blind">
+                    <input type="number" value="${level.big_blind}" min="0" step="50" class="big-blind">
+                    <input type="number" value="${level.ante}" min="0" step="25" class="ante">
+                    <input type="number" value="${level.duration / 60}" min="1" max="60" class="duration">
+                    <div class="row-actions">
+                        <button class="insert-btn" onclick="insertLevelAt(${index})">+</button>
+                        ${index > 0 ? `<button class="remove-btn" onclick="removeLevel(${index})">×</button>` : ''}
+                    </div>
+                </div>
     `).join('');
 
     blindEditor.innerHTML = headers + rows;
 }
 
-        function addLevel() {
-            const lastLevel = blindLevels[blindLevels.length - 1];
+function addLevel() {
+            const currentRow = document.querySelector('.blind-row.highlighted');
+            let insertIndex = blindLevels.length;
+            
+            if (currentRow) {
+                insertIndex = parseInt(currentRow.dataset.level);
+            }
+
+            const prevLevel = insertIndex > 0 ? blindLevels[insertIndex - 1] : 
+                           blindLevels[0] || { small_blind: 25, big_blind: 50, ante: 0, duration: 900 };
+            const nextLevel = insertIndex < blindLevels.length ? blindLevels[insertIndex] : null;
+            
+            // Calculate new blind values based on adjacent levels
+            let smallBlind, bigBlind;
+            if (prevLevel && nextLevel) {
+                // Insert between two levels - average the values
+                smallBlind = Math.round((prevLevel.small_blind + nextLevel.small_blind) / 2);
+                bigBlind = Math.round((prevLevel.big_blind + nextLevel.big_blind) / 2);
+            } else if (prevLevel) {
+                // Insert at end - increment by last step size or default
+                const step = blindLevels.length > 1 ? 
+                    blindLevels[blindLevels.length - 1].small_blind - blindLevels[blindLevels.length - 2].small_blind :
+                    25;
+                smallBlind = prevLevel.small_blind + step;
+                bigBlind = prevLevel.big_blind + (step * 2);
+            } else {
+                // First level
+                smallBlind = 25;
+                bigBlind = 50;
+            }
+
             const newLevel = {
-                level: lastLevel.level + 1,
-                small_blind: lastLevel.small_blind * 2,
-                big_blind: lastLevel.big_blind * 2,
-                ante: lastLevel.ante + 25,
-                duration: 900
+                level: insertIndex + 1,
+                small_blind: Math.max(25, smallBlind),
+                big_blind: Math.max(50, bigBlind),
+                ante: prevLevel ? prevLevel.ante : 0,
+                duration: prevLevel ? prevLevel.duration : 900
             };
-            blindLevels.push(newLevel);
+
+            blindLevels.splice(insertIndex, 0, newLevel);
+            
+            // Re-number all levels
+            blindLevels.forEach((level, i) => level.level = i + 1);
             renderBlindEditor();
+            
+            // Highlight the new row
+            const newRow = document.querySelector(`.blind-row[data-level="${newLevel.level}"]`);
+            if (newRow) {
+                newRow.classList.add('highlighted');
+                newRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
         }
 
         function removeLevel(index) {
@@ -1257,6 +1386,45 @@ function renderBlindEditor() {
                 blindLevels.splice(index, 1);
                 blindLevels.forEach((level, i) => level.level = i + 1);
                 renderBlindEditor();
+            }
+        }
+
+        function insertLevelAt(index) {
+            const prevLevel = blindLevels[index];
+            const nextLevel = blindLevels[index + 1];
+            
+            // Calculate new blind values based on adjacent levels
+            let smallBlind, bigBlind;
+            if (prevLevel && nextLevel) {
+                smallBlind = Math.round((prevLevel.small_blind + nextLevel.small_blind) / 2);
+                bigBlind = Math.round((prevLevel.big_blind + nextLevel.big_blind) / 2);
+            } else if (prevLevel) {
+                smallBlind = prevLevel.small_blind * 2;
+                bigBlind = prevLevel.big_blind * 2;
+            } else {
+                smallBlind = 25;
+                bigBlind = 50;
+            }
+
+            const newLevel = {
+                level: index + 2, // Insert after current index
+                small_blind: smallBlind,
+                big_blind: bigBlind,
+                ante: prevLevel ? prevLevel.ante : 0,
+                duration: prevLevel ? prevLevel.duration : 900
+            };
+
+            blindLevels.splice(index + 1, 0, newLevel);
+            
+            // Re-number all levels
+            blindLevels.forEach((level, i) => level.level = i + 1);
+            renderBlindEditor();
+            
+            // Highlight the new row
+            const newRow = document.querySelector(`.blind-row[data-level="${newLevel.level}"]`);
+            if (newRow) {
+                newRow.classList.add('highlighted');
+                newRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
         }
 
@@ -1560,32 +1728,65 @@ function showEditPanel() {
     }
 }
 
-function renderBlindEditor() {
-    const blindEditor = document.getElementById('blindEditor');
-    if (!blindEditor) return;
+        function renderBlindEditor() {
+            const blindEditor = document.getElementById('blindEditor');
+            if (!blindEditor) return;
 
-    // Add headers
-    const headers = `
-        <div class="blind-headers">
-            <div>Small Blind</div>
-            <div>Big Blind</div>
-            <div>Ante</div>
-            <div>Duration (min)</div>
-        </div>
-    `;
+            // Add headers
+            const headers = `
+                <div class="blind-headers">
+                    <div>Small Blind</div>
+                    <div>Big Blind</div>
+                    <div>Ante</div>
+                    <div>Duration (min)</div>
+                </div>
+            `;
 
-    const rows = blindLevels.map((level, index) => `
-        <div class="blind-row" data-level="${index + 1}">
-            <input type="number" value="${level.small_blind}" min="0" step="25" class="small-blind">
-            <input type="number" value="${level.big_blind}" min="0" step="50" class="big-blind">
-            <input type="number" value="${level.ante}" min="0" step="25" class="ante">
-            <input type="number" value="${level.duration / 60}" min="1" max="60" class="duration">
-            ${index > 0 ? `<div class="remove-btn" onclick="removeLevel(${index})">×</div>` : ''}
-        </div>
-    `).join('');
+            const rows = blindLevels.map((level, index) => `
+                <div class="blind-row" data-level="${index + 1}">
+                    <input type="number" value="${level.small_blind}" min="0" step="25" class="small-blind">
+                    <input type="number" value="${level.big_blind}" min="0" step="50" class="big-blind">
+                    <input type="number" value="${level.ante}" min="0" step="25" class="ante">
+                    <input type="number" value="${level.duration / 60}" min="1" max="60" class="duration">
+                    <div class="row-actions">
+                        <button class="insert-btn" onclick="insertLevelAt(${index})">+</button>
+                        ${index > 0 ? `<button class="remove-btn" onclick="removeLevel(${index})">×</button>` : ''}
+                    </div>
+                </div>
+            `).join('');
 
-    blindEditor.innerHTML = headers + rows;
-}
+            blindEditor.innerHTML = headers + rows;
+        }
+
+        function insertLevelAt(index) {
+            const prevLevel = blindLevels[index];
+            const nextLevel = blindLevels[index + 1];
+            
+            // Calculate new blind values based on adjacent levels
+            let smallBlind, bigBlind;
+            if (prevLevel && nextLevel) {
+                smallBlind = Math.round((prevLevel.small_blind + nextLevel.small_blind) / 2);
+                bigBlind = Math.round((prevLevel.big_blind + nextLevel.big_blind) / 2);
+            } else if (prevLevel) {
+                smallBlind = prevLevel.small_blind * 2;
+                bigBlind = prevLevel.big_blind * 2;
+            } else {
+                smallBlind = 25;
+                bigBlind = 50;
+            }
+
+            const newLevel = {
+                level: index + 1,
+                small_blind: smallBlind,
+                big_blind: bigBlind,
+                ante: prevLevel ? prevLevel.ante : 0,
+                duration: prevLevel ? prevLevel.duration : 900
+            };
+
+            blindLevels.splice(index + 1, 0, newLevel);
+            blindLevels.forEach((level, i) => level.level = i + 1);
+            renderBlindEditor();
+        }
 
 document.addEventListener('DOMContentLoaded', () => {
     // ... existing code ...
