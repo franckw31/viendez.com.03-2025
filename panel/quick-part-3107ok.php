@@ -1205,9 +1205,9 @@ JOIN activite a ON p.`id-activite` = a.`id-activite`";
                 }
             });
 
-    // Apply initial styling
-    $('input[name^="participations["][name$="[challenger]"]:checked').each(function() {
-        $(this).closest('tr').find('.recave-select')
+            // Apply initial styling
+            $('input[name^="participations["][name$="[challenger]"]:checked').each(function() {
+                $(this).closest('tr').find('.recave-select')
                     .css({'color': 'blue', 'font-weight': 'bold'});
             });
 

@@ -919,18 +919,19 @@ echo "<script>const WS_HOST = '$wsHost';</script>";
             { level: 4, small_blind: 400, big_blind: 800, ante: 0, duration: 900 },
             { level: 5, small_blind: 500, big_blind: 1000, ante: 0, duration: 900 },
             { level: 6, small_blind: 600, big_blind: 1200, ante: 0, duration: 900 },
-            { level: 6, small_blind: 800, big_blind: 1600, ante: 0, duration: 900 },
-            { level: 7, small_blind: 1000, big_blind: 2000, ante: 0, duration: 900 },
+            { level: 7, small_blind: 800, big_blind: 1600, ante: 0, duration: 900 },
             { level: 8, small_blind: 0, big_blind: 0, ante: 0, duration: 600 },
-            { level: 9, small_blind: 1500, big_blind: 3000, ante: 0, duration: 1020 },
-            { level: 10, small_blind: 2000, big_blind: 4000, ante: 0, duration: 1080 },            
-            { level: 11, small_blind: 3000, big_blind: 6000, ante: 0, duration: 1140 },
-            { level: 12, small_blind: 4000, big_blind: 8000, ante: 0, duration: 1200 },
-            { level: 13, small_blind: 0, big_blind: 0, ante: 0, duration: 600 },
-            { level: 14, small_blind: 5000, big_blind: 10000, ante: 0, duration: 1200 },
+            { level: 9, small_blind: 1000, big_blind: 2000, ante: 0, duration: 1020 },
+            { level: 10, small_blind: 1500, big_blind: 3000, ante: 0, duration: 1080 },
+            { level: 11, small_blind: 2000, big_blind: 4000, ante: 0, duration: 1140 },            
+            { level: 12, small_blind: 3000, big_blind: 6000, ante: 0, duration: 1200 },
+            { level: 13, small_blind: 4000, big_blind: 8000, ante: 0, duration: 1200 },
+            { level: 14, small_blind: 0, big_blind: 0, ante: 0, duration: 600 },
+            { level: 15, small_blind: 5000, big_blind: 10000, ante: 0, duration: 1200 },
             { level: 16, small_blind: 8000, big_blind: 16000, ante: 0, duration: 1200 },
             { level: 17, small_blind: 10000, big_blind: 20000, ante: 0, duration: 1200 },
-            { level: 18, small_blind: 15000, big_blind: 30000, ante: 0, duration: 3600 }
+            { level: 18, small_blind: 15000, big_blind: 30000, ante: 0, duration: 1200 },
+            { level: 19, small_blind: 20000, big_blind: 40000, ante: 0, duration: 3600 }
         
    ];
 
@@ -1796,6 +1797,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const plusMinBtn = document.getElementById('plusMinBtn');
     const restartBlindsBtn = document.getElementById('restartBlindsBtn');
     
+    
+
+
     if (minusMinBtn) minusMinBtn.addEventListener('click', () => adjustTime(-1));
     if (plusMinBtn) plusMinBtn.addEventListener('click', () => adjustTime(1));
     if (restartBlindsBtn) restartBlindsBtn.addEventListener('click', restartBlinds);
@@ -1814,5 +1818,8 @@ function updateClock() {
 setInterval(updateClock, 1000);
 updateClock(); // Exécution immédiate
     </script>
+    <footer style="position: fixed; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.8); padding: 10px; text-align: center; z-index: 1000;">
+        <a href="/panel/dashboard.php" style="color: white; font-weight: bold; text-decoration: none; font-size: 16px;">Menu Principal</a>
+    </footer>
 </body>
 </html>

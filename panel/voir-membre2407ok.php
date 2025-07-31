@@ -1297,21 +1297,19 @@ if (isset($_POST['submit4'])) {
                                                                                 </div> -->
                                                                                             <div class="card-body">
                                                                                                 <!-- <table id="datatablesSimple"> -->
-                                                                                                <table id="activiteTable" class="table table-hover w-100">
+                                                                                                <table id="employeeTable" class="display" style="width:100%">
                                                                                                     <thead>
                                                                                                         <tr>
                                                                                                             <th>Date
                                                                                                             </th>
-                                                                                                            <th>Activité
+                                                                                                            <th>Titre
                                                                                                             </th>
                                                                                                             <th>Lieu
                                                                                                             </th>
-                                                                                                            <th>Points
+                                                                                                            <th>Editer
                                                                                                             </th>
-                                                                                                            <th>Participation
+                                                                                                            <th>Cloner
                                                                                                             </th>
-                                                                                                            
-                                                                                                            
                                                                                                         </tr>
                                                                                                     </thead>
                                                                                                     <tbody>
@@ -1326,22 +1324,16 @@ if (isset($_POST['submit4'])) {
                                                                                                                     <td>
                                                                                                                         <?php echo $row2['date_depart']; ?>
                                                                                                                     </td>
-                                                                                                                   
                                                                                                                     <td>
                                                                                                                         <a href="voir-activite.php?uid=<?php echo $row['id-activite']; ?>"><?php echo $row2['titre-activite']; ?></a>
                                                                                                                     </td>
                                                                                                                     <td>
                                                                                                                         <?php echo $row2['ville']; ?>
                                                                                                                     </td>
-                                                                                                                    <td>
-                                                                                                                        <?php echo $row['points']; ?>
-                                                                                                                    </td>
-                                                                                                                    
-                                                                                                                    
                                                                                                                 <?php } ?>
                                                                                                                 <td>
                                                                                                                     <!-- <a href="ajout-competences.php?id=<?php echo $row['id'] ?>&del=deleteind" onClick="return confirm('Are you sure you want to delete?')" class="btn btn-transparent btn-xs" tooltip-placement="top" tooltip="Remove"><i class="fa fa-times fa fa-white"></i></a> -->
-                                                                                                                    <a href="voir-participation.php?id=<?php echo $row['id-participation']; ?>" class="btn btn-transparent btn-xs" tooltip-placement="top" tooltip="Edit"><i class="fa fa-pencil"></i></a>
+                                                                                                                    <a href="voir-activite.php?uid=<?php echo $row['id-activite']; ?>" class="btn btn-transparent btn-xs" tooltip-placement="top" tooltip="Edit"><i class="fa fa-pencil"></i></a>
                                                                                                                 </td>
                                                                                                                 </tr>
                                                                                                             <?php $cnt = $cnt + 1;
@@ -1477,20 +1469,20 @@ if (isset($_POST['submit4'])) {
     </script>
     <script>
         $(document).ready(function() {
-            const table = $('#activiteTable').DataTable({
+            const table = $('#employeeTable').DataTable({
                 language: { url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/fr-FR.json' },
                 dom: '<"row"<"col"B><"col"f>>rt<"row"<"col"i><"col"p>>',
                 buttons: ['copy', 'excel', 'pdf', 'print'],
                 pageLength: 5,
-                order: [[0, 'desc']],
+                order: [[0, 'asc']],
                 columnDefs: [
-                    { targets: 0, type: 'date-eu' }
-                   
+                    { targets: 5, type: 'date-eu' },
+                    { targets: 6, className: 'points-cell' }
                 ],
                 responsive: true
             });
 
-            $('#activiteTable').on('click', 'tr.clickable-row', function() {
+            $('#employeeTable').on('click', 'tr.clickable-row', function() {
                 window.location.href = 'voir-membre.php?id=' + $(this).data('id');
             });
         });
