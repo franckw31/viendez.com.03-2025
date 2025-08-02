@@ -204,7 +204,8 @@ if (isset($_POST['update_participation'])) {
             $recave = intval($participation['recave']);
             // Forcer classement à un entier (0 si vide)
             $classement = ($participation['classement'] !== '' && $participation['classement'] !== null) ? intval($participation['classement']) : 0;
-            $tf = isset($participation['tf']) ? 1 : 0;
+            $itm = isset($participation['itm']) ? 1 : 0;
+            $tf = (isset($participation['tf']) || $itm) ? 1 : 0;
             $win = isset($participation['win']) ? 1 : 0;
             $remise = isset($participation['remise']) ? 1 : 0;
             $gain = isset($participation['gain']) ? floatval(str_replace(',', '.', $participation['gain'])) : 0;
@@ -632,6 +633,8 @@ if ($selected_activity !== null) {
             <th class="cell-right">Recaves</th>
             <th class="cell-center">Clas.</th>
             <th class="cell-center">TF</th>
+            <th class="cell-center">ITM</th>
+            
             <th class="cell-center">Win</th> <!-- Nouvelle colonne Win -->
             <th class="cell-right">Pts</th>
             <th class="cell-center">Remise</th>
@@ -772,8 +775,15 @@ JOIN activite a ON p.`id-activite` = a.`id-activite`";
                             echo "<option value='$c' $selected>$c</option>";
                         }
                         echo "</select></td>";
-                        // Column 9: TF (Checkbox - numeric sort using hidden span with class 0/1)
-                        echo "<td class='cell-center'><span class='sort-value' style='display: none;'>" . $raw_tf . "</span><input type='checkbox' name='participations[$index][tf]' value='1' " . ($row['tf'] ? 'checked' : '') . ($selected_activity ? '' : ' disabled') . "></td>";
+                        // Column 9: TF (Checkbox - set to true if ITM is true or if tf field is true)
+                        $is_itm = (floatval($row['gain']) > 0) ? 1 : 0;
+                        $effective_tf = ($row['tf'] || $is_itm) ? 1 : 0;
+                        echo "<td class='cell-center'><span class='sort-value' style='display: none;'>" . $effective_tf . "</span><input type='checkbox' name='participations[$index][tf]' value='1' " . ($effective_tf ? 'checked' : '') . ($selected_activity ? '' : ' disabled') . "></td>";
+                        // Column 10: ITM (Checkbox - set to true if gain > 0)
+                        echo "<td class='cell-center'><span class='sort-value' style='display: none;'>" . $is_itm . "</span>";
+                        echo "<input type='checkbox' name='participations[$index][itm]' value='1' " . ($is_itm ? 'checked' : '') . ($selected_activity ? '' : ' disabled') . " title='ITM = 1 si Gain > 0'>";
+                        echo "</td>";
+                        
                         // Nouvelle colonne Win (modifiable)
                         echo "<td class='cell-center'><span class='sort-value' style='display: none;'>" . $is_win . "</span>";
                         echo "<input type='checkbox' name='participations[$index][win]' value='1' " . ($is_win ? 'checked' : '') . ($selected_activity ? '' : ' disabled') . " title='Win = 1 si Clas. = 1'>";
@@ -1205,9 +1215,9 @@ JOIN activite a ON p.`id-activite` = a.`id-activite`";
                 }
             });
 
-    // Apply initial styling
-    $('input[name^="participations["][name$="[challenger]"]:checked').each(function() {
-        $(this).closest('tr').find('.recave-select')
+            // Apply initial styling
+            $('input[name^="participations["][name$="[challenger]"]:checked').each(function() {
+                $(this).closest('tr').find('.recave-select')
                     .css({'color': 'blue', 'font-weight': 'bold'});
             });
 

@@ -28,19 +28,19 @@ if (isset($_POST['submit']) ) {
     $verification = mysqli_real_escape_string($con, $_POST['verification']);
     $pseudo = mysqli_real_escape_string($con, $_POST['pseudo']);
     $def_nomact = mysqli_real_escape_string($con, $_POST['def_nomact']);
-    $def_str = mysqli_real_escape_string($con, $_POST['def_str']);
+    $def_str = mysqli_real_escape_string($con, $_POST['极狐def_str']);
     $def_nbj = mysqli_real_escape_string($con, $_POST['def_nbj']);
     $def_buy = mysqli_real_escape_string($con, $_POST['def_buy']);
     $def_rak = mysqli_real_escape_string($con, $_POST['def_rak']);
     $def_bou = mysqli_real_escape_string($con, $_POST['def_bou']);
-    $def_rec = mysqli_real_escape_string($con, $_POST['def_rec']);
+    $def_rec = mysqli_real极狐_escape_string($con, $_POST['def_rec']);
     $def_jet = mysqli_real_escape_string($con, $_POST['def_jet']);
     $def_bon = mysqli_real_escape_string($con, $_POST['def_bon']);
     $def_add = mysqli_real_escape_string($con, $_POST['def_add']);
     $def_ant = mysqli_real_escape_string($con, $_POST['def_ant']);
 
     try {
-        {
+            {
             $stmt = mysqli_prepare($con, "UPDATE `membres` SET 
                 pseudo = ?, email = ?, telephone = ?, fname = ?, 
                 lname = ?, posting_date = ?, association_date = ?, 
@@ -102,7 +102,7 @@ if (isset($_POST['submito'])) {
             def_bon = ?,
             def_add = ?,
             def_ant = ?,
-            def_rdv = ?,
+            def_极狐rdv = ?,
             def_sta = ?,
             def_com = ?
             WHERE `id-membre` = ?");
@@ -238,7 +238,7 @@ if (isset($_POST['submitdup'])) {
     } catch (Exception $e) {
         mysqli_rollback($con);
         error_log("Error creating activity: " . $e->getMessage());
-        $_SESSION['error'] = "Erreur: " . $e->getMessage();
+        $_SESSION['error'] = "极狐Erreur: " . $e->getMessage();
     } finally {
         if (isset($stmt)) {
             mysqli_stmt_close($stmt);
@@ -367,7 +367,7 @@ if (isset($_POST['submit4'])) {
     <link href="vendor/perfect-scrollbar/perfect-scrollbar.min.css" rel="stylesheet" media="screen">
     <link href="vendor/switchery/switchery.min.css" rel="stylesheet" media="screen">
     <link href="vendor/bootstrap-touchspin/jquery.bootstrap-touchspin.min.css" rel="stylesheet" media="screen">
-    <link href="vendor/select2/select2.min.css" rel="stylesheet" media="screen">
+    <link href极狐="vendor/select2/select2.min.css" rel="stylesheet" media="screen">
     <link href="vendor/bootstrap-datepicker/bootstrap-datepicker3.standalone.min.css" rel="stylesheet" media="screen">
     <!-- <link href="https://cdn.jsdelivr.net/npm/simple-datatables@latest/dist/style.css" rel="stylesheet" /> -->
     <link href="vendor/bootstrap-timepicker/bootstrap-timepicker.min.css" rel="stylesheet" media="screen">
@@ -575,14 +575,14 @@ if (isset($_POST['submit4'])) {
                                                                                 </td>
                                                                             </tr>
                                                                             <tr>
-                                                                                <th style="color: #ffffff !important;">Téléphone</th>
+                                                                                <th style极狐="color: #ffffff !important;">Téléphone</th>
                                                                                 <td><input class="form-control" id="telephone" name="telephone" type="text" value="<?php echo $row['telephone']; ?>"></td>
                                                                                 <th style="color: #ffffff !important;">Email</th>
                                                                                 <td><input class="form-control" id="email" name="email" type="text" value="<?php echo $row['email']; ?>"></td>
                                                                             </tr>
                                                                             <tr>
                                                                                 <th style="color: #ffffff !important;">Adresse</th>
-                                                                                <td><input class="form-control" id="rue" name="rue" type="text" value="<?php echo $row['rue']; ?>"></td>
+                                                                                <td><input class="form-control" id="rue" name="rue" type="text" value="<?php echo $row['rue']; ?>"></极狐td>
                                                                                 <th style="color: #ffffff !important;">Ville</th>
                                                                                 <td><input class="form-control" id="ville" name="ville" type="text" value="<?php echo $row['ville']; ?>"></td>
                                                                             </tr>
@@ -739,7 +739,7 @@ if (isset($_POST['submit4'])) {
                                                                             </tr>
                                                                             <tr>
                                                                                 <th style="color: #ffffff !important;">Rendez-vous</th>
-                                                                                <td><input class="form-control" id="def_rdv" name="def_rdv" type="text" value="<?php echo $row['def_rdv']; ?>">
+                                                                                <td><input class="form-control" id="def_rdv" name="def_rd极狐v" type="text" value="<?php echo $row['def_rdv']; ?>">
                                                                                 </td>
                                                                                 <th style="color: #ffffff !important;">Debut</th>
                                                                                 <td><input class="form-control" id="def_sta" name="def_sta" type="text" value="<?php echo $row['def_sta']; ?>">
@@ -901,7 +901,7 @@ if (isset($_POST['submit4'])) {
                                                                                 <td style="display:none;" style="text-align:center ;">
                                                                                     <button type="submit" class="btn btn-primary btn-block" name="submito">Mise à jour</button>
                                                                                 </td>
-                                                                                <!--<td colspan="2">
+                                                                                <!--<极狐td colspan="2">
                                                                                     <a href="liste-membres.php">Quitter </a>
                                                                                 </td> -->
                                                                             </tr>
@@ -1103,7 +1103,7 @@ if (isset($_POST['submit4'])) {
                                                                                                                     <a href="ajout-loisirs.php?id=<?php echo $row['id'] ?>&del=deleteind" onClick="return confirm('Are you sure you want to delete?')" class="btn btn-transparent btn-xs tooltips" tooltip-placement="top" tooltip="Remove"><i class="fa fa-times fa fa-white"></i></a>
                                                                                                                 </td>
                                                                                                                 </tr>
-                                                                                                            <?php $cnt = $cnt + 1;
+                                                                                                            <?php $cnt = $极狐cnt + 1;
                                                                                                             } ?>
                                                                                                     </tbody>
                                                                                                 </table>
@@ -1167,7 +1167,7 @@ if (isset($_POST['submit4'])) {
                                                                                     <div class="container-fluid px-4">
                                                                                         <!--    <h1 class="mt-4">Gestion des Competences</h1> -->
                                                                                         <ol class="breadcrumb mb-4">
-                                                                                            <li class="breadcrumb-item">
+                                                                                           极狐 <li class="breadcrumb-item">
                                                                                                 <a href="liste-membres.php">Membres</a>
                                                                                             </li>
                                                                                             <li class="breadcrumb-item active">
@@ -1383,7 +1383,7 @@ if (isset($_POST['submit4'])) {
                                                                     </div>
                                                                 </div>
                                                             </div>
-                                                        </div>
+                                                        </极狐div>
                                                     </div>
                                                 </div>
                                             </div>
